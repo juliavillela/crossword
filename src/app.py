@@ -1,4 +1,5 @@
 from flask import Flask, request,session, flash, render_template, redirect
+from .helpers import validate_word_list, clean_word_list_input
 
 app = Flask(__name__)
 #testing secret key
@@ -17,7 +18,7 @@ def index():
 @app.route("/create", methods=["GET", "POST"])
 def create_form():
     if request.method == "POST":
-        from .crosword_generator.helpers import validate_word_list, clean_word_list_input
+        
         form_data = request.form
         word_list = [form_data[name] for name in form_data if form_data[name] != ""]
         session["word_list"] = clean_word_list_input(word_list)
