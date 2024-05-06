@@ -1,0 +1,25 @@
+{% extends 'layout.html' %}
+
+{% block main %}
+
+    <h3> word list </h3>
+    <p> add bellow the words and definitions you would like to use in the crossword puzzle. </p>
+    
+    <form class="container mt-3" id="word-list-form" method="post" action="create">
+        <ol id="input-container">
+            {% if context.word_list %}
+                {% for word in context.word_list%}
+                    <li class="mb-2 invalid">
+                    <input name="word-{{word}}" type="text" value="{{word}}" class="form-control" aria-label="word">
+                    </li>
+                {% endfor %}
+            {% endif %}
+        </ol>
+        <div class="mb-3">
+            <button class="btn btn-secondary" id="add-more-lines" click="">add more</button>
+        </div>
+        <input class="btn btn-primary" type="submit" value="generate puzze">
+        <a href="clear" class="btn btn-secondary" id="clear-lines-btn">discard</a> 
+    </form>
+
+ {% endblock %}
