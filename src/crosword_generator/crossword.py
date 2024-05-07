@@ -313,61 +313,25 @@ class Crossword:
         print()
     
     def save_key_img(self, filename):
-        cell_size = 50
-        cell_border = 2
-        interior_size = cell_size - 2 * cell_border
-
-        img = Image.new(
-            "RGBA",
-            ( self.width() * cell_size,
-            self.height() * cell_size),
-            "white"
-        )
-
-        font = ImageFont.load_default(40)
-        draw = ImageDraw.Draw(img)
-
-        for row in range(self.height()):
-            for col in range(self.width()):
-                # Calculate coordinates for the cell
-                x0 = col * cell_size
-                y0 = row * cell_size
-                x1 = (col + 1) * cell_size
-                y1 = (row + 1) * cell_size
-
-
-                # Get the character in the cell
-                char = self.key[row][col]
-
-                # Ignore EMPTY and WORD_BOUNDRY
-                if char is not EMPTY:
-
-                    # Draw cell border
-                    draw.rectangle([x0, y0, x1, y1], fill="white", outline="black")
-                    # Calculate text size and position
-                    # text_size = draw.textsize(char, font=font)
-                    text_x = x0 + (interior_size - 25) / 2
-                    text_y = y0 + (interior_size - 45) / 2
-
-                    # Draw the character in the cell
-                    draw.text((text_x, text_y), char, fill="black", font=font)
-
-        img.save(filename)
+        self._save_image(self.key, 40, filename)
 
     def save_blank_img(self, filename):
+        self._save_image(self.blank, 20, filename )
 
+    def _save_image(self, grid, font_size, filename):
         cell_size = 50
         cell_border = 2
         interior_size = cell_size - 2 * cell_border
-
+        
+        #create image dimentions
         img = Image.new(
             "RGBA",
-            ( self.width() * cell_size,
-            self.height() * cell_size),
+            ( (self.width() * cell_size) + cell_border,
+            (self.height() * cell_size) + cell_border),
             "white"
         )
 
-        font = ImageFont.load_default(20)
+        font = ImageFont.load_default(font_size)
         draw = ImageDraw.Draw(img)
 
         for row in range(self.height()):
@@ -378,24 +342,21 @@ class Crossword:
                 x1 = (col + 1) * cell_size
                 y1 = (row + 1) * cell_size
 
-
                 # Get the character in the cell
-                char = self.blank[row][col]
-
-                # Ignore EMPTY and WORD_BOUNDRY
+                char = grid[row][col]
+                
+                # Ignore EMPTY
                 if char is not EMPTY:
+                    # draw rectangle
+                    coordinates = [x0, y0, x1, y1]
+                    draw.rectangle(coordinates, fill="white", outline="black")
 
-                    # Draw cell border
-                    draw.rectangle([x0, y0, x1, y1], fill="white", outline="black")
-                    # Calculate text size and position
-                    # text_size = draw.textsize(char, font=font)
+                    #draw characters
                     text_x = x0 + (interior_size - 25) / 2
                     text_y = y0 + (interior_size - 45) / 2
-
-                    # Draw the character in the cell
                     draw.text((text_x, text_y), char, fill="black", font=font)
-
-        img.save(filename)
+            
+            img.save(filename)
 
     def height(self):
         """
