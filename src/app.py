@@ -1,5 +1,5 @@
 from flask import Flask, request,session, flash, render_template, redirect
-from .helpers import validate_word_list, clean_word_list_input
+from src.helpers import validate_word_list, clean_word_list_input
 
 app = Flask(__name__)
 #testing secret key
@@ -55,6 +55,7 @@ def custom_crossword():
     print("get request on custom crossword")
     context = {
         "word_list": session.get('word_list'),
-        "image_path": "static/js/media/test_puzzle.png"
+        "key_img_path": "static/js/media/test_key.png",
+        "blank_img_path": "static/js/media/test_blank.png"
     }
     return render_template("crossword.html", context=context)
