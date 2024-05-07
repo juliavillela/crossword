@@ -1,6 +1,6 @@
 from flask import Flask, request,session, flash, render_template, redirect
-from src.helpers import validate_word_list, clean_word_list_input
-from src.crosword_generator.generate import CrosswordGenerator
+from . import validate_word_list, clean_word_list_input
+from .crosword_generator import CrosswordGenerator
 app = Flask(__name__)
 #testing secret key
 app.secret_key = b'Y\xf1Xz\x00\xad|eQ\x80t \xca\x1a\x10K'
