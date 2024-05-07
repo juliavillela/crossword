@@ -1,11 +1,11 @@
-from flask import Flask, request,session, flash, render_template, redirect
-
+import os
+from flask import Flask, request, session, flash, render_template, redirect, send_from_directory, url_for
 
 app = Flask(__name__)
 #testing secret key
 app.secret_key = b'Y\xf1Xz\x00\xad|eQ\x80t \xca\x1a\x10K'
 
-word_list = None
+media_folder = os.path.join(app.root_path, 'media')
 
 @app.route("/", methods = ["GET"])
 def index():
@@ -53,8 +53,8 @@ def generate_crossword():
         gen = CrosswordGenerator(session.get("word_list"))
         crossword = gen.generate()
         if crossword:
-            crossword.save_key_img("./static/js/media/test_key.png")
-            crossword.save_blank_img("./static/js/media/test_blank.png")
+            crossword.save_key_img(os.path.join(media_folder,"test_key.png"))
+            crossword.save_blank_img(os.path.join(media_folder,"test_blank.png"))
         else:
             print("COULD NOT generate")
         return redirect("/custom")
@@ -64,7 +64,11 @@ def custom_crossword():
     print("get request on custom crossword")
     context = {
         "word_list": session.get('word_list'),
-        "key_img_path": "static/js/media/test_key.png",
-        "blank_img_path": "static/js/media/test_blank.png"
+        "key_img_path": url_for('media', filename='test_key.png'),
+        "blank_img_path": url_for('media', filename='test_blank.png'),
     }
     return render_template("crossword.html", context=context)
+
+@app.route('/media/<path:filename>')
+def media(filename):
+    return send_from_directory('media', filename)
