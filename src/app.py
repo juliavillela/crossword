@@ -1,6 +1,6 @@
 from flask import Flask, request,session, flash, render_template, redirect
 from src.helpers import validate_word_list, clean_word_list_input
-
+from src.crosword_generator.generate import CrosswordGenerator
 app = Flask(__name__)
 #testing secret key
 app.secret_key = b'Y\xf1Xz\x00\xad|eQ\x80t \xca\x1a\x10K'
@@ -48,6 +48,13 @@ def generate_crossword():
         flash("you don't have a valid wordlist to create from")
         return redirect("/create")
     else:
+        gen = CrosswordGenerator(session.get("word_list"))
+        crossword = gen.generate()
+        if crossword:
+            crossword.save_key_img("./static/js/media/test_key.png")
+            crossword.save_blank_img("./static/js/media/test_blank.png")
+        else:
+            print("COULD NOT generate")
         return redirect("/custom")
     
 @app.route("/custom", methods =["GET"])
