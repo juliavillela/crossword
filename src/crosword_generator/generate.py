@@ -1,7 +1,7 @@
 from random import shuffle
 
-from .constants import *
-from .crossword import CrosswordGrid
+from src.crosword_generator.constants import *
+from src.crosword_generator.crossword import CrosswordGrid
 
 class CrosswordBuilder:
     def __init__(self, words:list, grid_size, max_iteration_count=50) -> None:

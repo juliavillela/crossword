@@ -1,4 +1,4 @@
-from .constants import *
+from src.crosword_generator.constants import *
 
 def clean(grid:list[list]):
     """
