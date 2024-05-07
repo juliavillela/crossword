@@ -1,6 +1,6 @@
 from flask import Flask, request,session, flash, render_template, redirect
-from . import validate_word_list, clean_word_list_input
-from .crosword_generator import CrosswordGenerator
+
+
 app = Flask(__name__)
 #testing secret key
 app.secret_key = b'Y\xf1Xz\x00\xad|eQ\x80t \xca\x1a\x10K'
@@ -17,6 +17,7 @@ def index():
 
 @app.route("/create", methods=["GET", "POST"])
 def create_form():
+    from .helpers import validate_word_list, clean_word_list_input
     if request.method == "POST":
         
         form_data = request.form
@@ -44,6 +45,7 @@ def clear():
 
 @app.route("/generate_crossword", methods =["GET"])
 def generate_crossword():
+    from .crosword_generator import CrosswordGenerator
     if not session.get("word_list") or not session.get("word_list_is_valid"):
         flash("you don't have a valid wordlist to create from")
         return redirect("/create")
