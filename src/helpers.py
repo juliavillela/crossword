@@ -1,7 +1,5 @@
-MAX_WORDS = 30
-MIN_WORDS = 3
-MAX_WORD_LEN = 35
-MIN_WORD_LEN = 3
+import os 
+from .crosword_generator.constants import *
 
 def validate_word_list(word_list):
     """
@@ -43,3 +41,12 @@ def validate_word_list(word_list):
 
 def clean_word_list_input(word_list):
     return [word.lower() for word in word_list]
+
+def delete_session_files(session, media_folder):
+    key_file = os.path.join(media_folder, f'{session.get("session_id")}key.png')
+    if os.path.exists(key_file):
+        os.remove(key_file)
+    
+    blank_file = os.path.join(media_folder, f'{session.get("session_id")}blank.png')
+    if os.path.exists(blank_file):
+        os.remove(blank_file)
