@@ -5,7 +5,6 @@ from .crossword import CrosswordGrid
 
 class CrosswordBuilder:
     def __init__(self, words:list, grid_size, max_iteration_count=50) -> None:
-        validate_word_list(words)
         self.words = sorted(words, key=lambda w: len(w), reverse=True)
         self.grid_size = grid_size
         self.max_iteration_count = max_iteration_count
