@@ -1,6 +1,8 @@
 import os
 import uuid
-from flask import Flask, request, session, flash, render_template, redirect, send_from_directory, url_for
+import zipfile
+
+from flask import Flask, request, session, flash, render_template, redirect, send_from_directory, url_for, send_file
 
 from .crosword_generator import CrosswordGenerator
 from .helpers import validate_word_list, clean_word_list_input, delete_session_files
@@ -74,6 +76,20 @@ def custom_crossword():
         "blank_img_path": url_for('media', filename=f'{session.get("session_id")}blank.png'),
     }
     return render_template("crossword.html", context=context)
+
+@app.route("/download", methods=["GET"])
+def download():
+    key_path = os.path.join(media_folder, f'{session.get("session_id")}key.png')
+    blank_path = os.path.join(media_folder, f'{session.get("session_id")}blank.png')
+    zip_filename = "media/my_crossword.zip"
+
+    #create zip file:
+    with zipfile.ZipFile(zip_filename, "w") as zip_file:
+        zip_file.write(key_path, "key.png")
+        zip_file.write(blank_path, "blank.png")
+
+    return send_file(zip_filename, as_attachment=True)
+    # return redirect("/custom")
 
 @app.route('/media/<path:filename>')
 def media(filename):
