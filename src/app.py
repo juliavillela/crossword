@@ -1,4 +1,5 @@
 import os
+import sys
 import uuid
 import zipfile
 
@@ -6,6 +7,10 @@ from flask import Flask, request, session, flash, render_template, redirect, sen
 
 from .crosword_generator import CrosswordGenerator
 from .helpers import validate_word_list, clean_word_list_input, delete_session_files
+
+# Add module to sys.path
+module_dir = os.path.join(os.path.dirname(__file__), 'crossword_generator')
+sys.path.append(module_dir)
 
 app = Flask(__name__)
 #testing secret key
