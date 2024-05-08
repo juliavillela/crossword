@@ -78,6 +78,8 @@ def custom_crossword():
 def download():
     key_path = os.path.join(media_folder, f'{session.get("session_id")}key.png')
     blank_path = os.path.join(media_folder, f'{session.get("session_id")}blank.png')
+    
+    # this would cause trouble if 2 different sessions are saving at the exact same time
     zip_filename = "media/my_crossword.zip"
 
     #create zip file:
@@ -86,7 +88,6 @@ def download():
         zip_file.write(blank_path, "blank.png")
 
     return send_file(zip_filename, as_attachment=True)
-    # return redirect("/custom")
 
 @app.route('/media/<path:filename>')
 def media(filename):
