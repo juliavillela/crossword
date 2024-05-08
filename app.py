@@ -4,8 +4,8 @@ import zipfile
 
 from flask import Flask, request, session, flash, render_template, redirect, send_from_directory, url_for, send_file
 
-from .crosword_generator import CrosswordGenerator
 from .helpers import validate_word_list, clean_word_list_input, delete_session_files
+from .crosword_generator import CrosswordGenerator
 
 app = Flask(__name__)
 #testing secret key
