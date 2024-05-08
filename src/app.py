@@ -18,10 +18,7 @@ def index():
     if not session.get("session_id"):
         session["session_id"] = str(uuid.uuid4())
     if request.method == "GET":
-        context = {
-            "word_list": session.get("word_list"),
-        }
-        return render_template("index.html", context=context)
+        return render_template("index.html")
 
 @app.route("/create", methods=["GET", "POST"])
 def create_form():
