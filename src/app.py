@@ -80,8 +80,7 @@ def download():
     blank_path = os.path.join(media_folder, f'{session.get("session_id")}blank.png')
     
     # this would cause trouble if 2 different sessions are saving at the exact same time
-    zip_filename = "media/my_crossword.zip"
-
+    zip_filename = os.path.join(media_folder, 'my_crossword.zip')
     #create zip file:
     with zipfile.ZipFile(zip_filename, "w") as zip_file:
         zip_file.write(key_path, "key.png")
