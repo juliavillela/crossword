@@ -1,7 +1,35 @@
 {% extends 'layout.html' %}
 
 {% block main %}
-<h1>index</h1>
-    <a class="btn btn-primary" href="create"> create crossword puzzle</a>
+    <p>Generate a custom crossword puzzle from your own list of words.</p>
+    <a class="btn btn-primary mb-3" href="create"> create puzzle</a>
+    <h3>how it works</h3>
+    <p>Given your input, crossword generator will give you two images to download: 
+        a <b>puzzle key</b>, that contains the placement of each letter and, of course, 
+        a numbered <b>blank puzzle</b> that you can give to somebody else to solve</p>
+    <p><b>puzzle key:</b></p>
+    <div class="mb-3"  style="
+    max-width: 500px;
+    contain: content; ">
+        <img src="{{ url_for('static', filename='assets/key.png') }}" alt="" style="width: 100%;">
+    </div>
+    <p>the puzzle above was generated from the words</p>
+    <ul>
+        <li>pickthewords</li>
+        <li>puzzle</li>
+        <li>custom</li>
+        <li>generate</li>
+        <li>buildyourown</li>
+        <li>crossword</li>
+    </ul>
+    <p><b>blank puzzle:</b></p>
+    <div class="mb-3"  style="
+    max-width: 500px;
+    contain: content; ">
+        <img src="{{ url_for('static', filename='assets/blank.png') }}" alt="" style="width: 100%;">
+    </div>
+    <p> You can regenerate the puzzle as many times as you want from a same list of words until you find a configuration that you like.
+        However, keep in mind that some set of words will have more possible combinations than others.
+    </p>
 
 {% endblock %}

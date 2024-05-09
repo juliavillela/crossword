@@ -3,7 +3,9 @@
 {% block main %}
 
     <h3> word list </h3>
-    <p> add bellow the words and definitions you would like to use in the crossword puzzle. </p>
+    <p> input bellow the words you want to use in your crossword puzzle.</p>
+    <p class="small">You can add up to 30 words. Each of them should be at least 3 letters long and at most 35 letters long.
+        Try to avoid special characters because they might make your word list impossible to solve.</p>
     
     <form class="container mt-3" id="word-list-form" method="post" action="create">
         <ol id="input-container">
