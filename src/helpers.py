@@ -40,7 +40,7 @@ def validate_word_list(word_list):
     return (True, "will generate puzzle")
 
 def clean_word_list_input(word_list):
-    return [word.lower() for word in word_list]
+    return [word.lower().strip() for word in word_list]
 
 def delete_session_files(session, media_folder):
     key_file = os.path.join(media_folder, f'{session.get("session_id")}key.png')
