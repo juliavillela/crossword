@@ -119,7 +119,7 @@ class Crossword:
     
     def display_blank_grid(self):
         """
-        Prints visualization of grid to terminal
+        Print a visual representation of the blank puzzle grid to the terminal.
         """
         for row in self.blank:
             [print(char or "-", end=" ") for char in row]
@@ -197,12 +197,12 @@ class Crossword:
 
     def height(self):
         """
-        Returns int number of rows in grid
+        Return int number of rows in grid
         """
         return len(self.key)
 
     def width(self):
         """
-        Returns int number of columns in grid
+        Return int number of columns in grid
         """
         return len(self.key[0])
