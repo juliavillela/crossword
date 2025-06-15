@@ -2,7 +2,13 @@ from .constants import *
 
 def clean(grid:list[list]):
     """
-    Returns a copy of grid matrix where FILLER is replaced with None
+    Returns a copy of the given grid where all occurrences of FILLER are replaced with EMPTY.
+
+    Args:
+        grid (list[list]): A 2D list representing the crossword grid.
+
+    Returns:
+        list[list]: A new grid with FILLER cells replaced by EMPTY.
     """
     clean_grid = []
     for row in grid:
@@ -17,10 +23,15 @@ def clean(grid:list[list]):
 
 def trim(grid:list[list]):
     """
-    Returns a copy of grid matrix where empty columns and empty rows have been removed 
-    An empty line is a line where all values == EMPTY
+    Returns a copy of the grid with all-empty rows and columns removed.
 
-    If called on an empty grid: returns empty grid unchanged.
+    An empty row or column is one where all cells are equal to EMPTY.
+
+    Args:
+        grid (list[list]): A 2D list representing the crossword grid.
+
+    Returns:
+        list[list]: A trimmed grid with no empty rows or columns around the edges.
     """
     # Find the range of rows and columns with non-empty cells
     # grids are assumed to be square
