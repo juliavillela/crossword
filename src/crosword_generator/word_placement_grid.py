@@ -141,7 +141,7 @@ class WordPlacementGrid:
             row_offset = math.floor(len(word)/2)
             return (center_row-row_offset, center_col)
     
-    def match_many_char(self, char:str):
+    def find_char_positions(self, char:str):
         """
         Return a list of all positions (row, col) where the specified character appears in the grid.
 

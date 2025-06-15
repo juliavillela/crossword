@@ -12,7 +12,7 @@ class CrosswordBuilder:
     def __str__(self):
         return f"crossword generator({self.grid_size}): {self.words}"
     
-    def get_many_valid_word_placements(self, word, grid):
+    def get_many_valid_word_placements(self, word:str, grid:WordPlacementGrid):
         """
         Returns a list of tuples ((row,col), direction) for each 
         valid placement of word in grid
@@ -20,7 +20,7 @@ class CrosswordBuilder:
         valid_placements = []
         # iterate through each char in word to find matching chars in the grid
         for index, char in enumerate(word):
-            matches = grid.match_many_char(char)
+            matches = grid.find_char_positions(char)
             
             for match in matches:
                 h_col = match[1] - index
