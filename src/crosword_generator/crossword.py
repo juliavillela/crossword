@@ -96,32 +96,7 @@ class Crossword:
                 (HORIZONTAL or VERTICAL).
         """
         self.grid = clean(grid)
-
-        # Assign a number to each word according to their starting row and column
-        # and map cell position to number
-        self.positon_number_map = {}
-
-        horizontal_words = list(filter(lambda w: words[w][1]==HORIZONTAL, words))
-        # sort horizontal words by row index
-        horizontal_words.sort(key= lambda w: words[w][0][0])
-        vertical_words = list(filter(lambda w: words[w][1]==VERTICAL, words))
-        # sort vertical words by col index
-        vertical_words.sort(key= lambda w: words[w][0][1])
-        
-        for index, word in enumerate(horizontal_words):
-            position = words[word][0]
-            number = index + 1
-            self.positon_number_map[position] = str(number)
-
-        for index, word in enumerate(vertical_words):
-            position = words[word][0]
-            number = len(horizontal_words) + index + 1
-            # account for possibility that 2 words start at the same square
-            if self.positon_number_map.get(position):
-                self.positon_number_map[position] += f"/{number}"
-            else:
-                self.positon_number_map[position] = str(number)
-
+        self.positon_number_map = self._assign_numbers(words)
         self.blank = self._get_blank_grid()
         self.key = self._get_key_grid()
     
@@ -156,6 +131,45 @@ class Crossword:
         representing the completed puzzle (the answer key).
         """
         return trim(self.grid)
+
+    def _assign_numbers(self, words:dict):
+        """
+        Assigns sequential clue numbers to word starting positions in the grid.
+
+        Horizontal words are numbered first, top to bottom by row index.
+        Vertical words are numbered next, left to right by column index.
+        If a horizontal and vertical word share the same starting cell, both numbers are combined as a string (e.g., "3/10").
+
+        Args:
+            words (dict): A dictionary mapping each word to a tuple:
+                (starting_position: tuple[int, int], direction: str)
+
+        Returns:
+            dict: A mapping of starting grid positions (row, col) to clue numbers as strings.
+        """
+        positon_number_map = {}
+        horizontal_words = list(filter(lambda w: words[w][1]==HORIZONTAL, words))
+        # sort horizontal words by row index
+        horizontal_words.sort(key= lambda w: words[w][0][0])
+        vertical_words = list(filter(lambda w: words[w][1]==VERTICAL, words))
+        # sort vertical words by col index
+        vertical_words.sort(key= lambda w: words[w][0][1])
+        
+        for index, word in enumerate(horizontal_words):
+            position = words[word][0]
+            number = index + 1
+            positon_number_map[position] = str(number)
+
+        for index, word in enumerate(vertical_words):
+            position = words[word][0]
+            number = len(horizontal_words) + index + 1
+            # account for possibility that 2 words start at the same square
+            if positon_number_map.get(position):
+                positon_number_map[position] += f"/{number}"
+            else:
+                positon_number_map[position] = str(number)
+
+        return positon_number_map
 
     def display_key_grid(self):
         """
