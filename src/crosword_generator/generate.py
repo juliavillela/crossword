@@ -1,7 +1,7 @@
 from random import shuffle
 
 from .constants import *
-from .crossword import CrosswordGrid
+from .crossword import WordPlacementGrid
 
 class CrosswordBuilder:
     def __init__(self, words:list, grid_size, max_iteration_count=50) -> None:
@@ -38,7 +38,7 @@ class CrosswordBuilder:
     
     def iterative_placement(self):
         # create a blank grid
-        grid = CrosswordGrid(self.grid_size)
+        grid = WordPlacementGrid(self.grid_size)
         words = self.words.copy()
         
         # place first word

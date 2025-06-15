@@ -2,7 +2,7 @@ import math
 from .constants import *
 from .helpers import trim, clean
 
-class CrosswordGrid:
+class WordPlacementGrid:
     """
     Manages the placement of words on a square grid according to crossword-style constraints.
     
