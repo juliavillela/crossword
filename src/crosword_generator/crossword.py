@@ -4,28 +4,46 @@ from .helpers import trim, clean
 
 class CrosswordGrid:
     """
-    Represents a squre crosswordGrid that can place words according to constraints.
+    Manages the placement of words on a square grid according to crossword-style constraints.
+    
+    This class is responsible for enforcing rules such as non-overlapping placements,
+    valid intersections, boundary padding, and fitting within the grid dimensions.
+    It maintains an internal representation of the grid and tracks all placed words
+    along with their positions and orientations.
 
-    Words is a dict containing all the words that have been placed in the grid
-    and their respective position: a tuple of ints (row, col) for the first char in word, 
-    and direction: VERTICAL or HORIZONTAL
- 
-    Grid is a two-dimentional list of rows and columns where each item represents a cell in the puzzle.
+    Attributes:
+        words (dict): A mapping from word (str) to a tuple:
+           - position (tuple[int, int]): starting (row, col)
+           - direction (str): either HORIZONTAL or VERTICAL
+        grid (list): A 2D list representing the current state of the grid
     """
-    def __init__(self, initial:int):
+
+    def __init__(self, initial_size:int):
         """
-        Initializes an empty crossword with max width and length equal to initial.
+        Initialize an empty square crossword grid.
+
+        Args:
+            initial_size (int): The initial number of rows and columns. 
+            Creates a grid of size initial_size x initial_size.
+
+        Attributes:
+            words (dict[str, tuple[tuple[int, int], str]]): 
+                Stores placed words with their starting positions and directions, initialized empty.
+            grid (list[list[str]]): 
+                2D list representing the crossword grid, initialized with EMPTY cells.
         """
         self.words = {}
-        self.grid = [[EMPTY for _ in range(initial)] for _ in range(initial)]
+        self.grid = [[EMPTY for _ in range(initial_size)] for _ in range(initial_size)]
 
     def place_word(self, word:str, row:int, col:int, direction:str):
         """
-        Adds word and position to self.words.
-        updates grid to contain word at placement
-        as well as necessary padding
+        Place a word in the grid and update internal state.
 
-        This method does not check if placement is allowed before altering the grid.
+        Add the word and its position to self.words.
+        Update the grid to include the word at the specified position and direction,
+        adding filler characters before, after, and around intersections as needed.
+
+        Note: This method does not validate whether the placement is allowed.
         """
         self.words[word] = ((row,col), direction)
         self._place_chars(word, row, col, direction)
@@ -36,11 +54,15 @@ class CrosswordGrid:
    
     def can_place_vertical(self, word:str, row:int, col:int):
         """
-        Return True if word can be placed at position (row,col) vertically, else False.
-        The constraints for placement are:
-        1. word must fit the grid
-        2. word must be preceded and followed by an empty square
-        3. word cannot change any of the characters that have already been placed
+        Check if a word can be placed vertically starting at (row, col).
+
+        Returns True if all the following constraints are satisfied:
+        1. The word fits within the grid boundaries.
+        2. The cell before the first letter and after the last letter is either empty or at the grid edge.
+        3. The word does not overwrite any existing characters that differ from its own.
+
+        Returns:
+            bool: True if placement is valid, False otherwise.
         """
         if not self._fits_in_grid(word, row, col, VERTICAL):
             return False
@@ -60,11 +82,15 @@ class CrosswordGrid:
     
     def can_place_horizontal(self, word:str, row:int, col:int):
         """
-        Return True if word can be placed at position (row,col) horizontally, else False.
-        The constraints for placement are:
-        1. word must fit the grid
-        2. word must be preceded and followed by an empty square
-        3. word cannot change any of the characters that have already been placed
+        Check if a word can be placed horizontally starting at (row, col).
+
+        Returns True if all the following constraints are satisfied:
+        1. The word fits within the grid boundaries.
+        2. The cell before the first letter and after the last letter is either empty or at the grid edge.
+        3. The word does not overwrite any existing characters that differ from its own.
+
+        Returns:
+            bool: True if placement is valid, False otherwise.
         """
         if not self._fits_in_grid(word, row, col, HORIZONTAL):
             return False
@@ -83,8 +109,18 @@ class CrosswordGrid:
     
     def get_center_placement(self, word:str, direction:str):
         """
-        Return a tuple (row, col) for word placement that results in 
-        word being placed as close to the center of the grid as possible.
+        Return the (row, col) coordinates to place the first word centered on the grid.
+
+        This method assumes the grid is empty and returns a placement such that
+        the word appears as close as possible to the visual center, either horizontally
+        or vertically depending on the specified direction.
+
+        Args:
+            word (str): The word to place.
+            direction (str): Either HORIZONTAL or VERTICAL.
+
+        Returns:
+            tuple[int, int]: Starting (row, col) for placement.
         """
         if len(word) > len(self.grid):
             raise ValueError(f'word: "{word}" does not fit the grid')
@@ -97,8 +133,14 @@ class CrosswordGrid:
             return (center_row-row_offset, center_col)
     
     def match_many_char(self, char:str):
-        """ 
-        Return a list of tuples (row,col) with each occurence of char in grid
+        """
+        Return a list of all positions (row, col) where the specified character appears in the grid.
+
+        Args:
+            char (str): The character to search for.
+
+        Returns:
+            list[tuple[int, int]]: List of (row, col) tuples indicating occurrences of char.
         """
         positions = []
         for row_i, row in enumerate(self.grid):
@@ -109,7 +151,8 @@ class CrosswordGrid:
        
     def display(self):
         """
-        Prints visualization of grid to terminal
+        Print a visualization of the grid to the terminal.
+        Empty cells are shown as '-'.
         """
         for row in self.grid:
             [print(char or "-", end=" ") for char in row]
@@ -130,7 +173,8 @@ class CrosswordGrid:
     
     def _place_chars(self, word:str, row:int, col:int, direction:str):
         """
-        Updates grid to contain word characters at placement.
+        Place the characters of the word onto the grid at the specified row and column,
+        in the given direction (HORIZONTAL or VERTICAL). Modifies the grid in-place.
         """
         if not self._fits_in_grid(word, row, col, direction):
             raise ValueError(f'word {word} does not fit in grid')
@@ -145,7 +189,9 @@ class CrosswordGrid:
 
     def _pad_word(self, word:str, row:int, col:int, direction:str):
         """
-        Adds FILLER char to start and end of word
+        Add FILLER character immediately before and after the word on the grid to separate
+        it from adjacent words. Does nothing if the padding cell is out of grid bounds.
+        Modifies the grid in-place.
         """
         if direction == HORIZONTAL:
             if col > 0:
@@ -161,25 +207,28 @@ class CrosswordGrid:
     
     def _pad_intersection(self, row:int, col:int):
         """
-        Adds FILLER char around intersections
+        Add FILLER characters diagonally adjacent to the cell at (row, col) if those cells are EMPTY,
+        to prevent unintended word connections around intersections. Modifies the grid in-place.
         """
         # up-left
         if row > 0 and col > 0 and self.grid[row-1][col-1] == EMPTY:
             self.grid[row-1][col-1] = FILLER
-        #up-rigth
+        #up-right
         if row > 0 and col < len(self.grid)-1 and self.grid[row-1][col+1] == EMPTY:
             self.grid[row-1][col+1] = FILLER
         #down-left
         if row < len(self.grid)-1 and col > 0 and self.grid[row+1][col-1] == EMPTY:
             self.grid[row+1][col-1] = FILLER
-        #down-rigth
+        #down-right
         if row < len(self.grid)-1 and col < len(self.grid)-1 and self.grid[row+1][col+1] == EMPTY:
             self.grid[row+1][col+1] = FILLER 
     
     def _fits_in_grid(self, word:str, row:int, col:int, direction:str):
         """
-        Returns True if word fits in grid starting at row column,
-        in direction = direction, else False.
+        Check if word fits in grid starting at (row,col) in the specified direction (HORIZONTAL, or VERTICAL)
+        
+        Returns:
+            bool: True if word fits, False otherwise.
         """
         if row < 0 or col < 0:
             return False
@@ -195,12 +244,12 @@ class CrosswordGrid:
     
     def _intersections(self, word:str, row:int, col:int, direction:str):
         """
-        Returns a list of tupples (row,col) - each tuple represents a cell
-        where word intersects with another word in the oposing direction.
+        Return a list of tuples (row, col) where word intersects with other words
+        placed in the opposing direction on the grid.
         """
         def word_range(word,row,col,direction):
             """
-            Returns a list of tuples for each cell occupied by word
+            Return a list of tuples representing each cell occupied by word
             """
             if direction == VERTICAL:
                 return [(row + i, col) for i in range(len(word))]
@@ -228,7 +277,10 @@ class CrosswordGrid:
 
     def export(self):
         """
-        Returns an instance of Crossword from current grid
+        Create and return a Crossword instance representing the current grid state.
+
+        Returns:
+            Crossword: A Crossword object initialized with the current grid and word placements.
         """
         return Crossword(self.grid, self.words)
     
