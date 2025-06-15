@@ -60,7 +60,12 @@ class WordPlacementGrid:
         1. The word fits within the grid boundaries.
         2. The cell before the first letter and after the last letter is either empty or at the grid edge.
         3. The word does not overwrite any existing characters that differ from its own.
-
+        
+        Args:
+            word: the word to place
+            row: row index for the first character
+            col: column index for the first character
+        
         Returns:
             bool: True if placement is valid, False otherwise.
         """
@@ -88,6 +93,10 @@ class WordPlacementGrid:
         1. The word fits within the grid boundaries.
         2. The cell before the first letter and after the last letter is either empty or at the grid edge.
         3. The word does not overwrite any existing characters that differ from its own.
+        Args:
+            word: the word to place
+            row: row index for the first character
+            col: column index for the first character
 
         Returns:
             bool: True if placement is valid, False otherwise.
