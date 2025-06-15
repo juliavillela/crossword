@@ -64,7 +64,7 @@ class Crossword:
     - A blank grid, with clue numbers and hidden letters, for players to solve.
     - A key grid, with all the correct letters filled in.
 
-    It also provides functionality to visualize and save these grids.
+    It also provides functionality to visualize and save these grids as images.
 
     Attributes:
         grid (list[list[str]]): The original completed crossword grid containing letters and EMPTY cells.
