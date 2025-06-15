@@ -1,7 +1,7 @@
 from random import shuffle
 
 from .constants import *
-from .crossword import WordPlacementGrid
+from .word_placement_grid import WordPlacementGrid
 
 class CrosswordBuilder:
     def __init__(self, words:list, grid_size, max_iteration_count=50) -> None:
@@ -12,10 +12,14 @@ class CrosswordBuilder:
     def __str__(self):
         return f"crossword generator({self.grid_size}): {self.words}"
     
-    def get_many_valid_word_placements(self, word:str, grid:WordPlacementGrid):
+    def get_valid_word_placements(self, word:str, grid:WordPlacementGrid):
         """
-        Returns a list of tuples ((row,col), direction) for each 
-        valid placement of word in grid
+        Return all valid placements for a word in the current state of the grid.
+        valid placement of word in grid.
+        
+        A valid placement is any position where the word can legally be inserted 
+        (horizontally or vertically) according to crossword constraints.
+        While overlapping with at least one other character.
         """
         valid_placements = []
         # iterate through each char in word to find matching chars in the grid
@@ -41,7 +45,7 @@ class CrosswordBuilder:
         grid = WordPlacementGrid(self.grid_size)
         words = self.words.copy()
         
-        # place first word
+        # place longest word first
         words.sort(key= lambda x: len(x), reverse=True)
         first_word = words.pop(0)
         (row, col) = grid.get_center_placement(first_word, HORIZONTAL)
@@ -58,7 +62,7 @@ class CrosswordBuilder:
             # valid_placement = self.get_valid_word_placement(word, grid)
 
             # get all valid placements for word in current grid
-            valid_placements = self.get_many_valid_word_placements(word, grid)
+            valid_placements = self.get_valid_word_placements(word, grid)
             
             # shuffle to select placement at random
             shuffle(valid_placements)
@@ -115,7 +119,7 @@ class CrosswordGenerator:
 
     def _get_min_grid_size(self):
         """
-        Returns an integer to be used as starting grid_size for generator
+        Returnbe used as starting grid_size for generator
         based on wordlist.
         """
         from math import sqrt, ceil
@@ -135,7 +139,7 @@ class CrosswordGenerator:
         starting from the smallest grid-size(as defined in the init method)
         if not enough valid puzzles were generated, grid_size is incremented untill max_grid_size
 
-        #TBD : In many scenarios(eg: max_grid_size is close to largest word length) it is possible that no valid grid can be generated 
+        #TBD : In many scenars an integer to ios(eg: max_grid_size is close to largest word length) it is possible that no valid grid can be generated 
         and there is no error catch implemented to handle this.
         
         """
