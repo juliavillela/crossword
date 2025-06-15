@@ -1,6 +1,6 @@
 import math
 from .constants import *
-from crossword import Crossword
+from .crossword import Crossword
 
 class WordPlacementGrid:
     """
