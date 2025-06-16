@@ -82,3 +82,22 @@ def test_find_char_positions():
     assert (2, 2) in positions
     assert (4, 0) in positions
     assert len(positions) == 2
+
+def test_fits_in_grid():
+    grid = WordPlacementGrid(4)
+    assert grid._fits_in_grid("WORD", 0, 0, HORIZONTAL) == True
+    assert grid._fits_in_grid("WORD", 0, 0, VERTICAL) == True
+    assert grid._fits_in_grid("WORD", 0, 1, HORIZONTAL) == False
+    assert grid._fits_in_grid("WORD", 1, 0, VERTICAL) == False
+
+def test_intersections():
+    grid = WordPlacementGrid(5)
+    grid.place_word("CATS", 1, 1, HORIZONTAL)
+    grid.place_word("MAT", 0, 2, VERTICAL) # will intersect at (1,2)
+    grid.place_word("SPA", 1, 4, VERTICAL) # will intersect at (1, 4)
+
+    intersections = grid._intersections("CATS", 1,1, HORIZONTAL)
+    
+    assert (1,2) in intersections
+    assert (1,4) in intersections
+    assert len(intersections) == 2
