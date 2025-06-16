@@ -1,280 +1,115 @@
-import math
 from .constants import *
-from .helpers import trim, clean
-
-class CrosswordGrid:
-    """
-    Represents a squre crosswordGrid that can place words according to constraints.
-
-    Words is a dict containing all the words that have been placed in the grid
-    and their respective position: a tuple of ints (row, col) for the first char in word, 
-    and direction: VERTICAL or HORIZONTAL
- 
-    Grid is a two-dimentional list of rows and columns where each item represents a cell in the puzzle.
-    """
-    def __init__(self, initial:int):
-        """
-        Initializes an empty crossword with max width and length equal to initial.
-        """
-        self.words = {}
-        self.grid = [[EMPTY for _ in range(initial)] for _ in range(initial)]
-
-    def place_word(self, word:str, row:int, col:int, direction:str):
-        """
-        Adds word and position to self.words.
-        updates grid to contain word at placement
-        as well as necessary padding
-
-        This method does not check if placement is allowed before altering the grid.
-        """
-        self.words[word] = ((row,col), direction)
-        self._place_chars(word, row, col, direction)
-        self._pad_word(word, row, col, direction)
-        intersections = self._intersections(word, row, col, direction)
-        for (row,col) in intersections:
-            self._pad_intersection(row, col)
-   
-    def can_place_vertical(self, word:str, row:int, col:int):
-        """
-        Return True if word can be placed at position (row,col) vertically, else False.
-        The constraints for placement are:
-        1. word must fit the grid
-        2. word must be preceded and followed by an empty square
-        3. word cannot change any of the characters that have already been placed
-        """
-        if not self._fits_in_grid(word, row, col, VERTICAL):
-            return False
-        
-        # the square before the start of word and after the end of word should be empty
-        prev_empty_or_edge = row == 0 or self.grid[row-1][col] in [EMPTY, FILLER]
-        next_empty_or_edge = row + len(word) == len(self.grid) or self.grid[row + len(word)][col] in [EMPTY, FILLER]
-        if not (prev_empty_or_edge and next_empty_or_edge):
-            return False
-        
-        # there are no conflicting characters on the cells word will occupy
-        for i, letter in enumerate(word):     
-            if self.grid[row + i][col] not in [EMPTY, letter]:
-                return False
-
-        return True
-    
-    def can_place_horizontal(self, word:str, row:int, col:int):
-        """
-        Return True if word can be placed at position (row,col) horizontally, else False.
-        The constraints for placement are:
-        1. word must fit the grid
-        2. word must be preceded and followed by an empty square
-        3. word cannot change any of the characters that have already been placed
-        """
-        if not self._fits_in_grid(word, row, col, HORIZONTAL):
-            return False
-        
-        # the square before the start of word and after the end of word should be empty
-        prev_empty_or_edge = col == 0 or self.grid[row][col-1] in [EMPTY, FILLER]
-        next_empty_or_edge = col + len(word) == len(self.grid) or self.grid[row][col + len(word)] in [EMPTY, FILLER]
-        if not (prev_empty_or_edge and next_empty_or_edge):
-            return False
-        
-        # there are no conflicting characters on the cells word will occupy
-        for i, letter in enumerate(word):
-            if self.grid[row][col + i] not in [None, letter]:
-                return False
-        return True
-    
-    def get_center_placement(self, word:str, direction:str):
-        """
-        Return a tuple (row, col) for word placement that results in 
-        word being placed as close to the center of the grid as possible.
-        """
-        if len(word) > len(self.grid):
-            raise ValueError(f'word: "{word}" does not fit the grid')
-        center_col = center_row = math.floor(len(self.grid)/2)
-        if direction == HORIZONTAL:
-            col_offset = math.floor(len(word)/2)
-            return (center_row, center_col - col_offset)
-        if direction == VERTICAL:
-            row_offset = math.floor(len(word)/2)
-            return (center_row-row_offset, center_col)
-    
-    def match_many_char(self, char:str):
-        """ 
-        Return a list of tuples (row,col) with each occurence of char in grid
-        """
-        positions = []
-        for row_i, row in enumerate(self.grid):
-            for col_i, cell in enumerate(row):
-                if char == cell:
-                    positions.append((row_i, col_i))
-        return positions
-       
-    def display(self):
-        """
-        Prints visualization of grid to terminal
-        """
-        for row in self.grid:
-            [print(char or "-", end=" ") for char in row]
-            print()
-        print()
-    
-    def get_grid(self):
-        """
-        returns grid matrix
-        """
-        return self.grid
-    
-    def get_words(self):
-        """
-        returns a list of words
-        """
-        return self.words.keys()
-    
-    def _place_chars(self, word:str, row:int, col:int, direction:str):
-        """
-        Updates grid to contain word characters at placement.
-        """
-        if not self._fits_in_grid(word, row, col, direction):
-            raise ValueError(f'word {word} does not fit in grid')
-        
-        if direction == HORIZONTAL:
-            for i, letter in enumerate(word):
-                self.grid[row][col + i] = letter
-
-        elif direction == VERTICAL:
-            for i, letter in enumerate(word):
-                self.grid[row + i][col] = letter
-
-    def _pad_word(self, word:str, row:int, col:int, direction:str):
-        """
-        Adds FILLER char to start and end of word
-        """
-        if direction == HORIZONTAL:
-            if col > 0:
-                self.grid[row][col-1] = FILLER
-            if col + len(word) < len(self.grid):
-                self.grid[row][col + len(word)] = FILLER
-
-        elif direction == VERTICAL:
-            if row > 0:
-                self.grid[row-1][col] = FILLER
-            if row + len(word) < len(self.grid):
-                self.grid[row + len(word)][col] = FILLER
-    
-    def _pad_intersection(self, row:int, col:int):
-        """
-        Adds FILLER char around intersections
-        """
-        # up-left
-        if row > 0 and col > 0 and self.grid[row-1][col-1] == EMPTY:
-            self.grid[row-1][col-1] = FILLER
-        #up-rigth
-        if row > 0 and col < len(self.grid)-1 and self.grid[row-1][col+1] == EMPTY:
-            self.grid[row-1][col+1] = FILLER
-        #down-left
-        if row < len(self.grid)-1 and col > 0 and self.grid[row+1][col-1] == EMPTY:
-            self.grid[row+1][col-1] = FILLER
-        #down-rigth
-        if row < len(self.grid)-1 and col < len(self.grid)-1 and self.grid[row+1][col+1] == EMPTY:
-            self.grid[row+1][col+1] = FILLER 
-    
-    def _fits_in_grid(self, word:str, row:int, col:int, direction:str):
-        """
-        Returns True if word fits in grid starting at row column,
-        in direction = direction, else False.
-        """
-        if row < 0 or col < 0:
-            return False
-        
-        if direction == VERTICAL:
-            if row + len(word) > len(self.grid):
-                return False
-            
-        if direction == HORIZONTAL:
-            if col + len(word) > len(self.grid[0]):
-                return False
-        return True
-    
-    def _intersections(self, word:str, row:int, col:int, direction:str):
-        """
-        Returns a list of tupples (row,col) - each tuple represents a cell
-        where word intersects with another word in the oposing direction.
-        """
-        def word_range(word,row,col,direction):
-            """
-            Returns a list of tuples for each cell occupied by word
-            """
-            if direction == VERTICAL:
-                return [(row + i, col) for i in range(len(word))]
-            if direction == HORIZONTAL:
-                return [(row, col + i) for i in range(len(word))]
-          
-        word1_range = word_range(word, row, col, direction)
-
-        if direction == VERTICAL:
-            perpendicular = [w for w in self.words if self.words[w][1] == HORIZONTAL]
-        else:
-            perpendicular = [w for w in self.words if self.words[w][1] == VERTICAL]
-
-        intersections = []
-
-        for word_2 in perpendicular:
-            word2_row, word2_col = self.words[word_2][0]
-            word2_direction = self.words[word_2][1]
-            
-            word2_range = word_range(word_2,word2_row, word2_col, word2_direction)
-            for position in word1_range:
-                if position in word2_range:
-                    intersections.append(position)
-        return intersections
-
-    def export(self):
-        """
-        Returns an instance of Crossword from current grid
-        """
-        return Crossword(self.grid, self.words)
-    
 from PIL import Image, ImageDraw, ImageFont #used in Crossword.save_blank_img and .save_key_img
+
+def clean(grid:list[list]):
+    """
+    Return a copy of the given grid where all occurrences of FILLER are replaced with EMPTY.
+
+    Args:
+        grid (list[list]): A 2D list representing the crossword grid.
+
+    Returns:
+        list[list]: A new grid with FILLER cells replaced by EMPTY.
+    """
+    clean_grid = []
+    for row in grid:
+        clean_row = []
+        for cell in row:
+            if cell == FILLER:
+                clean_row.append(EMPTY)
+            else:
+                clean_row.append(cell)
+        clean_grid.append(clean_row)
+    return clean_grid
+
+def trim(grid:list[list]):
+    """
+    Return a copy of the grid with all-empty rows and columns removed.
+
+    An empty row or column is one where all cells are equal to EMPTY.
+
+    Args:
+        grid (list[list]): A 2D list representing the crossword grid.
+
+    Returns:
+        list[list]: A trimmed grid with no empty rows or columns around the edges.
+    """
+    # Find the range of rows and columns with non-empty cells
+    # grids are assumed to be square
+    min_row = min_col = len(grid)
+    max_row = max_col = 0
+    for row_i, row in enumerate(grid):
+        for col_i, cell in enumerate(row):
+            if cell is not EMPTY:
+                min_row = min(min_row, row_i)
+                max_row = max(max_row, row_i)
+                min_col = min(min_col, col_i)
+                max_col = max(max_col, col_i)
+
+    # Create a new trimmed grid
+    trimmed_grid = []
+    for row in grid[min_row:max_row + 1]:
+        trimmed_grid.append(row[min_col:max_col + 1])
+
+    return trimmed_grid
+
+# This class is typically instantiated from a fully populated WordPlacementGrid
 
 class Crossword:
     """
-    Represents a finalized Crossword puzzle
+    Represents a finalized crossword puzzle built from a completed grid and
+    a set of placed words.
+
+    This class generates two versions of the puzzle:
+    - A blank grid, with clue numbers and hidden letters, for players to solve.
+    - A key grid, with all the correct letters filled in.
+
+    It also provides functionality to visualize and save these grids as images.
+
+    Attributes:
+        grid (list[list[str]]): The original completed crossword grid containing letters and EMPTY cells.
+        positon_number_map (dict): A mapping of word starting positions (row, col) to their assigned clue number(s).
+                                   If two words start at the same cell (one horizontal and one vertical), the number
+                                   is formatted as "X/Y".
+        blank (list[list[str]]): A grid where letters are hidden (replaced with BLANK),
+                                 and word starting positions are marked with their clue number.
+        key (list[list[str]]): A solution grid showing all placed words, with no clue numbers.
+
     """
     def __init__(self, grid:list[list], words:dict) -> None:
+        """
+        Initializes a Crossword object from a finalized grid and a dictionary of words.
+
+        This method cleans the given grid by replacing special filler characters with EMPTY,
+        assigns sequential numbers to words based on their starting positions,
+        distinguishing between horizontal and vertical words, and creates a mapping
+        from cell positions to their corresponding clue numbers for display purposes.
+
+        It also generates trimmed versions of the grid: a "blank" version for the player
+        to fill in, and a "key" version containing the complete answers.
+
+        Args:
+            grid (list[list]): 2D matrix representing the finalized crossword grid,
+                containing letters and EMPTY/FILLER markers.
+            words (dict): Dictionary where keys are words (strings) and values are tuples
+                containing the starting position (row, column) and the direction
+                (HORIZONTAL or VERTICAL).
+        """
         self.grid = clean(grid)
-
-        # Assign a number to each word according to theirs starting row or columns
-        # and map cell position to number
-        self.positon_number_map = {}
-
-        horizontal_words = list(filter(lambda w: words[w][1]==HORIZONTAL, words))
-        # sort horizontal words by row index
-        horizontal_words.sort(key= lambda w: words[w][0][0])
-        vertical_words = list(filter(lambda w: words[w][1]==VERTICAL, words))
-        # sort vertical words by col index
-        vertical_words.sort(key= lambda w: words[w][0][1])
-        
-        for index, word in enumerate(horizontal_words):
-            position = words[word][0]
-            number = index + 1
-            self.positon_number_map[position] = str(number)
-
-        for index, word in enumerate(vertical_words):
-            position = words[word][0]
-            number = len(horizontal_words) + index + 1
-            # account for possibility that 2 words start at the same square
-            if self.positon_number_map.get(position):
-                self.positon_number_map[position] += f"/{number}"
-            else:
-                self.positon_number_map[position] = str(number)
-
+        self.positon_number_map = self._assign_numbers(words)
         self.blank = self._get_blank_grid()
         self.key = self._get_key_grid()
     
     def _get_blank_grid(self):
         """
-        Returns a trimmed blank version of grid where EMPTY cells remain EMPTY,
-        letters are replaced with BLANK and the starting position for 
-        each word is replaced with the corresponding number.
+        Return a trimmed version of the grid for the puzzle to be solved.
+
+        In this version:
+        - EMPTY cells remain EMPTY
+        - Letters are replaced with BLANK symbols
+        - The starting position of each word is replaced with its assigned clue number
         """
+
         blank = []
         for row_i, row in enumerate(self.grid):
             blank_row = []
@@ -290,13 +125,57 @@ class Crossword:
     
     def _get_key_grid(self):
         """
-        Returns a trimmed version of the key grid containing words and EMPTY
+        Return a trimmed version of the solution grid.
+
+        This grid contains the full words placed in the crossword,
+        representing the completed puzzle (the answer key).
         """
         return trim(self.grid)
 
+    def _assign_numbers(self, words:dict):
+        """
+        Assigns sequential clue numbers to word starting positions in the grid.
+
+        Horizontal words are numbered first, top to bottom by row index.
+        Vertical words are numbered next, left to right by column index.
+        If a horizontal and vertical word share the same starting cell, both numbers are combined as a string (e.g., "3/10").
+
+        Args:
+            words (dict): A dictionary mapping each word to a tuple:
+                (starting_position: tuple[int, int], direction: str)
+
+        Returns:
+            dict: A mapping of starting grid positions (row, col) to clue numbers as strings.
+        """
+        positon_number_map = {}
+        horizontal_words = list(filter(lambda w: words[w][1]==HORIZONTAL, words))
+        # sort horizontal words by row index
+        horizontal_words.sort(key= lambda w: words[w][0][0])
+        vertical_words = list(filter(lambda w: words[w][1]==VERTICAL, words))
+        # sort vertical words by col index
+        vertical_words.sort(key= lambda w: words[w][0][1])
+        
+        for index, word in enumerate(horizontal_words):
+            position = words[word][0]
+            number = index + 1
+            positon_number_map[position] = str(number)
+
+        for index, word in enumerate(vertical_words):
+            position = words[word][0]
+            number = len(horizontal_words) + index + 1
+            # account for possibility that 2 words start at the same square
+            if positon_number_map.get(position):
+                positon_number_map[position] += f"/{number}"
+            else:
+                positon_number_map[position] = str(number)
+
+        return positon_number_map
+
     def display_key_grid(self):
         """
-        Prints visualization of grid to terminal
+        Print a visual representation of the solution (key) grid to the terminal.
+        
+        Each cell shows its character; EMPTY cells are displayed as '-'.
         """
         for row in self.key:
             [print(char or "-", end=" ") for char in row]
@@ -305,7 +184,7 @@ class Crossword:
     
     def display_blank_grid(self):
         """
-        Prints visualization of grid to terminal
+        Print a visual representation of the blank puzzle grid to the terminal.
         """
         for row in self.blank:
             [print(char or "-", end=" ") for char in row]
@@ -313,12 +192,35 @@ class Crossword:
         print()
     
     def save_key_img(self, filename):
+        """
+        Save an image file representing the solution (key) grid of the crossword.
+
+        Parameters:
+            filename (str): The path to save the image file.
+        """
         self._save_image(self.key, 40, filename)
 
     def save_blank_img(self, filename):
+        """
+        Save an image file representing the blank crossword grid (with numbered clues).
+
+        Parameters:
+            filename (str): The path to save the image file.
+        """
         self._save_image(self.blank, 20, filename )
 
     def _save_image(self, grid, font_size, filename):
+        """
+        Save an image representation of the crossword grid to a file.
+
+        Parameters:
+            grid (list[list]): 2D list representing the crossword grid to render.
+            font_size (int): Font size to use for rendering text in cells.
+            filename (str): Path to the file where the image will be saved.
+
+        The method draws each cell as a white rectangle with a black border,
+        and renders the character inside the cell, skipping EMPTY cells.
+        """
         cell_size = 50
         cell_border = 2
         interior_size = cell_size - 2 * cell_border
@@ -360,12 +262,12 @@ class Crossword:
 
     def height(self):
         """
-        Returns int number of rows in grid
+        Return int number of rows in grid
         """
         return len(self.key)
 
     def width(self):
         """
-        Returns int number of columns in grid
+        Return int number of columns in grid
         """
         return len(self.key[0])

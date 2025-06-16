@@ -1,26 +1,62 @@
 from random import shuffle
-
+from math import sqrt, ceil
 from .constants import *
-from .crossword import CrosswordGrid
+from .word_placement_grid import WordPlacementGrid
 
-class CrosswordBuilder:
-    def __init__(self, words:list, grid_size, max_iteration_count=50) -> None:
+class CrosswordGenerator:
+    """
+    Generates crossword puzzles by placing a list of words into a grid.
+
+    The generator attempts to place words iteratively on a grid, starting with
+    an initial size based on word lengths, and increases the grid size as needed
+    until all words fit or a maximum size limit is reached.
+
+    Usage:
+        Initialize with a list of words.
+        Call `generate()` to create a crossword puzzle instance containing all words,
+        or None if generation fails within constraints.
+    """
+    placement_attempts_per_word = 3 # Is multiplied by the number of words to define iteration limit in attempt_grid_build
+    max_attempts_per_size = 50 # Maximum number of grid build attempts allowed before increasing the grid size.
+    max_grid_size = 45 # Maximum allowed size of the crossword grid before giving up.
+
+    def __init__(self, words:list) -> None:
         self.words = sorted(words, key=lambda w: len(w), reverse=True)
-        self.grid_size = grid_size
-        self.max_iteration_count = max_iteration_count
+        self.grid_size = self._initial_grid_size()
 
     def __str__(self):
         return f"crossword generator({self.grid_size}): {self.words}"
     
-    def get_many_valid_word_placements(self, word, grid):
+    def _initial_grid_size(self):
         """
-        Returns a list of tuples ((row,col), direction) for each 
-        valid placement of word in grid
+        Calculate the initial size for the crossword grid.
+
+        The size is based on:
+        - The length of the longest word (the grid axis cannot be smaller than this).
+        - The total length of all words, estimating an area with about 20% empty space.
+
+        Returns:
+            int: The initial grid size (number of rows and columns).
+        """
+        lengths = [len(s) for s in self.words]
+        total = sum(lengths)
+        lengths.sort()
+        longest = lengths[-1] # axis cannot be smaller then the longest word
+        area_axis = ceil(sqrt(total)*1.2) # expect at least 20% of the grid to be empty
+        return max(longest, area_axis)
+
+    def _get_valid_word_placements(self, word:str, grid:WordPlacementGrid):
+        """
+        Return all valid placements for a word in the current state of the grid.
+        
+        A valid placement is any position where the word can legally be inserted 
+        (horizontally or vertically) according to crossword constraints.
+        While overlapping with at least one other character.
         """
         valid_placements = []
         # iterate through each char in word to find matching chars in the grid
         for index, char in enumerate(word):
-            matches = grid.match_many_char(char)
+            matches = grid.find_char_positions(char)
             
             for match in matches:
                 h_col = match[1] - index
@@ -36,29 +72,38 @@ class CrosswordBuilder:
                     valid_placements.append(((v_row, v_col), VERTICAL))
         return valid_placements
     
-    def iterative_placement(self):
+    def _attempt_grid_build(self):
+        """
+        Attempt to build a crossword grid by placing words iteratively.
+
+        Starts by placing the longest word at the center of the grid horizontally.
+        Then attempts to place the remaining words in random order,
+        selecting one of the valid placement found for each word.
+
+        Returns:
+            WordPlacementGrid: A grid instance with as many words placed as possible.
+            Some words may be missing if no valid placement was found within the iteration limit.
+        """
         # create a blank grid
-        grid = CrosswordGrid(self.grid_size)
+        grid = WordPlacementGrid(self.grid_size)
+        # create a copy of words
         words = self.words.copy()
         
-        # place first word
-        words.sort(key= lambda x: len(x), reverse=True)
+        # place longest word first
         first_word = words.pop(0)
         (row, col) = grid.get_center_placement(first_word, HORIZONTAL)
         grid.place_word(first_word, row, col, HORIZONTAL)
         
         # shuffle words to get random placement order
         shuffle(words)
-        max_iterations = 2 * len(words)
+        max_iterations = self.placement_attempts_per_word * len(words)
         iteration_count = 0
         
         while len(words) and iteration_count<max_iterations:
             word = words.pop(0)
             iteration_count += 1
-            # valid_placement = self.get_valid_word_placement(word, grid)
-
             # get all valid placements for word in current grid
-            valid_placements = self.get_many_valid_word_placements(word, grid)
+            valid_placements = self._get_valid_word_placements(word, grid)
             
             # shuffle to select placement at random
             shuffle(valid_placements)
@@ -71,77 +116,49 @@ class CrosswordBuilder:
             else:
                 # add word to the end of queue
                 words.append(word)
+
         # return grid (which might be incomplete)
         return grid
 
-    def generate(self):
+    def _retry_grid_builds(self):
         """
-        Return grid with self.words calling iterative_placement multiple times
-        untill all words have been placed in the grid or until self.max_iteration_count
+        Attempt to build a complete crossword grid by calling `attempt_grid_build` multiple times.
+
+        Tries to place all words in a grid of the current size by retrying the build process 
+        up to `self.max_attempts_per_size` times. Returns the first grid in which all words fit.
         
-        If could not place all words in grid, returns None
+        Returns:
+            WordPlacementGrid: A grid with all words placed, or None if unsuccessful.
         """
-        # starting with grid-size
-        # iteratively place words x timess
-        grid = self.iterative_placement()
+
+        grid = self._attempt_grid_build()
         iteration_counter = 0
+
         # stop when all words have been placed in grid or when iteration reaches max_count
-        while len(self.words) != len(grid.get_words()) and iteration_counter < self.max_iteration_count:
+        while len(self.words) != len(grid.get_words()) and iteration_counter < self.max_attempts_per_size:
             iteration_counter += 1
-            grid = self.iterative_placement()
+            grid = self._attempt_grid_build()
         
-        print("iteration count", iteration_counter)
+        print("iteration count", iteration_counter, self.grid_size) #debug
+
         if len(self.words) != len(grid.get_words()):
             return None
         else:
             return grid
 
-class CrosswordGenerator:
-    """
-    Use CrosswordBuilder and internal settings to generate valid crossword.
-    """
-    def __init__(self, word_list, attempts=None, max_grid_size=None) -> None:
-        """
-        - word_list: a validated list of words to use in puzzle
-        - attempts: how many times builder will try to place words on the grid before returning None(defaults to 50)
-        - max_grid_size: how large a grid can get before generation fails (defaults to MAX_WORD_LEN + 20)
-        """
-        self.words = word_list
-        self.grid_size = self._get_min_grid_size()
-        self.max_grid_size = max_grid_size or MAX_WORD_LEN + 20 # will stop trying and return impossible
-        if self.grid_size > self.max_grid_size:
-            raise ValueError("WORD LIST IS TOO LARGE TO GENERATE")
-        self.attempts = attempts or 50
-
-    def _get_min_grid_size(self):
-        """
-        Returns an integer to be used as starting grid_size for generator
-        based on wordlist.
-        """
-        from math import sqrt, ceil
-        lengths = [len(s) for s in self.words]
-        total = sum(lengths)
-        lengths.sort()
-        longest = lengths[-1] # axis cannot be smaller then the longest word
-        area_axis = ceil(sqrt(total)*1.2) # expect at least 20% of the grid to be empty
-        return max(longest, area_axis)
-
     def generate(self):
         """
-        Generate at least min_options of valid puzzles (a valid puzzle is one that contains all words in word-list)
-        and store them in self.grids.
+        Generate a complete crossword by incrementally increasing the grid size.
 
-        Tries to generate a valid puzzle self.attempt times 
-        starting from the smallest grid-size(as defined in the init method)
-        if not enough valid puzzles were generated, grid_size is incremented untill max_grid_size
+        Repeatedly calls `retry_grid_builds` to try generating a grid that contains all words.
+        If unsuccessful at the current grid size, the size is increased by 1 and the process repeats,
+        up to `self.max_grid_size`.
 
-        #TBD : In many scenarios(eg: max_grid_size is close to largest word length) it is possible that no valid grid can be generated 
-        and there is no error catch implemented to handle this.
-        
+        Returns:
+            Crossword: A completed crossword puzzle with all words placed, or None if not possible within size limit.
         """
         while self.grid_size < self.max_grid_size:
-            builder = CrosswordBuilder(self.words, self.grid_size, self.attempts)
-            grid = builder.generate()
+            grid = self._retry_grid_builds()
             if grid:
                 crossword = grid.export()
                 return crossword
