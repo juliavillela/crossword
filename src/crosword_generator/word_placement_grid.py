@@ -41,7 +41,7 @@ class WordPlacementGrid:
 
         Add the word and its position to self.words.
         Update the grid to include the word at the specified position and direction,
-        adding filler characters before, after, and around intersections as needed.
+        adding filler characters around intersections as needed.
 
         Note: This method does not validate whether the placement is allowed.
         """
