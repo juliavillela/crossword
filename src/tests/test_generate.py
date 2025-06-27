@@ -50,7 +50,7 @@ def test_generate_returns_Crossword():
     assert isinstance(result, Crossword)
 
 # tests on impossible word list should return none
-def test_attempt_build_grid_returns_incomplete_grid_for_impossible_word_set():
+def test_attempt_build_grid_returns_incomplete_grid_for_impossible_word_list():
     wordlist = [
         "aaa", "bbb", "ccc"
     ]
@@ -64,7 +64,7 @@ def test_attempt_build_grid_returns_incomplete_grid_for_impossible_word_set():
     placed_words = result.get_words()
     assert len(placed_words) == 1
 
-def test_retry_grid_builds_returns_none_for_impossible_word_set():
+def test_retry_grid_builds_returns_none_for_impossible_word_list():
     wordlist = [
         "aaa", "bbb", "ccc"
     ]
@@ -73,7 +73,7 @@ def test_retry_grid_builds_returns_none_for_impossible_word_set():
 
     assert result == None
 
-def test_generate_returns_none_for_impossible_word_set():
+def test_generate_returns_none_for_impossible_word_list():
     wordlist = [
         "aaa", "bbb", "ccc"
     ]
