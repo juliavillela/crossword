@@ -21,6 +21,11 @@ def test_place_word_horizontal():
     assert grid.grid[row][col + len(word)] == FILLER
     # check words dict
     assert grid.words[word] == ((row, col), HORIZONTAL)
+    # check char position dict
+    assert grid.char_positions["C"] == {(1,1)}
+    assert grid.char_positions["A"] == {(1,2)}
+    assert grid.char_positions["T"] == {(1,3)}
+
 
 def test_place_word_vertical():
     grid = WordPlacementGrid(5)
@@ -35,6 +40,11 @@ def test_place_word_vertical():
     assert grid.grid[row + len(word)][col] == FILLER
     # check words dict
     assert grid.words[word] == ((row, col), VERTICAL)
+    # check char position dict
+    assert grid.char_positions["C"] == {(1,1)}
+    assert grid.char_positions["A"] == {(2,1)}
+    assert grid.char_positions["T"] == {(3,1)}
+
 
 def test_can_place_vertical_boundaries():
     grid = WordPlacementGrid(4)
@@ -76,8 +86,8 @@ def test_can_place_horizontal_overlap():
 
 def test_find_char_positions():
     grid = WordPlacementGrid(5)
-    grid.grid[2][2] = "X"
-    grid.grid[4][0] = "X"
+    grid.place_word("X", 2, 2, HORIZONTAL)
+    grid.place_word("X", 4, 0, HORIZONTAL)
     positions = grid.find_char_positions("X")
     assert (2, 2) in positions
     assert (4, 0) in positions
