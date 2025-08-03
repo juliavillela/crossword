@@ -1,4 +1,5 @@
 import math
+import copy
 from .constants import *
 from .crossword import Crossword
 
@@ -117,6 +118,14 @@ class WordPlacementGrid:
                 return False
         return True
     
+    def copy(self):
+        initial_size = len(self.grid)
+        new_grid = WordPlacementGrid(initial_size)
+        new_grid.grid = copy.deepcopy(self.grid)
+        new_grid.char_positions = copy.deepcopy(self.char_positions)
+        new_grid.words = self.words.copy()
+        return new_grid
+
     def get_scored_valid_placements(self, word:str):
         """
         Return a list of valid placements (with non-zero score) for the given word
