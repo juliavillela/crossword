@@ -117,7 +117,35 @@ class WordPlacementGrid:
                 return False
         return True
     
-    def placement_score(self, word:str, row:int, col:int, direction:str):
+    def get_scored_valid_placements(self, word:str):
+        """
+        Return a list of valid placements (with non-zero score) for the given word
+        in the current state of the grid.
+        The score is based on how many intersections with already placed words this
+        placement creates. 
+
+        Returns:
+            list[((row, col), direction, score)]
+        """
+        valid_placements = []
+        # iterate through each char in word to find matching chars in the grid
+        for index, char in enumerate(word):
+            matches = self.find_char_positions(char)
+            for match in matches:
+                h_col = match[1] - index
+                h_row = match[0] 
+                h_score = self._placement_score(word, h_row, h_col, HORIZONTAL)
+                if h_score > 0:
+                    valid_placements.append(((h_row, h_col), HORIZONTAL, h_score)) 
+                
+                v_col = match[1]
+                v_row = match[0] - index
+                v_score = self._placement_score(word, v_row, v_col, VERTICAL)
+                if v_score > 0:
+                    valid_placements.append(((v_row, v_col), VERTICAL, v_score))
+        return valid_placements
+
+    def _placement_score(self, word:str, row:int, col:int, direction:str):
         # word must fit
         if not self._fits_in_grid(word, row, col, direction):
             return 0

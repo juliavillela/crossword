@@ -115,18 +115,38 @@ def test_intersections():
 def test_placement_score():
     grid = WordPlacementGrid(6)
     # doesn't fit
-    assert grid.placement_score("LONGWORD", 0, 0, HORIZONTAL) == 0
+    assert grid._placement_score("LONGWORD", 0, 0, HORIZONTAL) == 0
     # valid, but no overlap
-    assert grid.placement_score("CATS", 0, 0, HORIZONTAL) == 0
+    assert grid._placement_score("CATS", 0, 0, HORIZONTAL) == 0
 
     # vertical overlap on "A"
     grid.place_word("CATS", 1, 1, HORIZONTAL)
-    assert grid.placement_score("MATTE", 0, 2, VERTICAL) == 1
+    assert grid._placement_score("MATTE", 0, 2, VERTICAL) == 1
     
     grid.place_word("MATTE", 0, 2, VERTICAL)
     # horizontal overlap on "E"
-    assert grid.placement_score("DREAM", 4, 0, HORIZONTAL) == 1
+    assert grid._placement_score("DREAM", 4, 0, HORIZONTAL) == 1
     grid.place_word("DREAM", 4, 0, HORIZONTAL)
     # double overlap on "S" and "M"
-    assert grid.placement_score("STEM", 1, 4, VERTICAL) == 2
+    assert grid._placement_score("STEM", 1, 4, VERTICAL) == 2
     
+def test_get_scored_valid_placements():
+    grid = WordPlacementGrid(6)
+
+    # empty grid has no valid placements
+    assert grid.get_scored_valid_placements("CATS") == []
+
+    grid.place_word("CATS", 1, 1, HORIZONTAL)
+
+    # word "MAT" can only be placed at "A" intersection
+    assert grid.get_scored_valid_placements("MAT") == [((0,2), VERTICAL, 1)]
+
+    # Word "AT" can be placed intersecting "A" or "T"
+    valid = grid.get_scored_valid_placements("AT")
+    assert len(valid) == 2
+    # intersecting "A"
+    scored_position_1 = ((1, 2), VERTICAL, 1)
+    # intersecting "T"
+    scored_position_2 = ((0,3), VERTICAL, 1)
+    assert scored_position_1 in valid
+    assert scored_position_2 in valid
