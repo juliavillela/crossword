@@ -111,3 +111,22 @@ def test_intersections():
     assert (1,2) in intersections
     assert (1,4) in intersections
     assert len(intersections) == 2
+
+def test_placement_score():
+    grid = WordPlacementGrid(6)
+    # doesn't fit
+    assert grid.placement_score("LONGWORD", 0, 0, HORIZONTAL) == 0
+    # valid, but no overlap
+    assert grid.placement_score("CATS", 0, 0, HORIZONTAL) == 0
+
+    # vertical overlap on "A"
+    grid.place_word("CATS", 1, 1, HORIZONTAL)
+    assert grid.placement_score("MATTE", 0, 2, VERTICAL) == 1
+    
+    grid.place_word("MATTE", 0, 2, VERTICAL)
+    # horizontal overlap on "E"
+    assert grid.placement_score("DREAM", 4, 0, HORIZONTAL) == 1
+    grid.place_word("DREAM", 4, 0, HORIZONTAL)
+    # double overlap on "S" and "M"
+    assert grid.placement_score("STEM", 1, 4, VERTICAL) == 2
+    

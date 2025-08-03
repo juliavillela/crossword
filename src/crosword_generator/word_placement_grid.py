@@ -117,6 +117,37 @@ class WordPlacementGrid:
                 return False
         return True
     
+    def placement_score(self, word:str, row:int, col:int, direction:str):
+        # word must fit
+        if not self._fits_in_grid(word, row, col, direction):
+            return 0
+
+        # the square before the start of word and after the end of word should be empty
+        if direction == HORIZONTAL:
+            prev_empty_or_edge = col == 0 or self.grid[row][col-1] in [EMPTY, FILLER]
+            next_empty_or_edge = col + len(word) == len(self.grid) or self.grid[row][col + len(word)] in [EMPTY, FILLER]
+        else: # vertical
+            prev_empty_or_edge = row == 0 or self.grid[row-1][col] in [EMPTY, FILLER]
+            next_empty_or_edge = row + len(word) == len(self.grid) or self.grid[row + len(word)][col] in [EMPTY, FILLER]
+        if not (prev_empty_or_edge and next_empty_or_edge):
+            return 0
+
+        # calculate score based on overlaps
+        score = 0
+        for i, letter in enumerate(word):
+            if direction == HORIZONTAL:
+                cell = self.grid[row][col + i]
+            else:
+                cell = self.grid[row + i][col]
+            if cell == letter:
+                score += 1
+            elif cell == EMPTY:
+                continue
+            else:
+                return 0
+            
+        return score
+
     def get_center_placement(self, word:str, direction:str):
         """
         Return the (row, col) coordinates to place the first word centered on the grid.
