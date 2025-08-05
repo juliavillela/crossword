@@ -26,7 +26,6 @@ def test_place_word_horizontal():
     assert grid.char_positions["A"] == {(1,2)}
     assert grid.char_positions["T"] == {(1,3)}
 
-
 def test_place_word_vertical():
     grid = WordPlacementGrid(5)
     word = "CAT"
@@ -44,7 +43,6 @@ def test_place_word_vertical():
     assert grid.char_positions["C"] == {(1,1)}
     assert grid.char_positions["A"] == {(2,1)}
     assert grid.char_positions["T"] == {(3,1)}
-
 
 def test_can_place_vertical_boundaries():
     grid = WordPlacementGrid(4)
@@ -150,3 +148,27 @@ def test_get_scored_valid_placements():
     scored_position_2 = ((0,3), VERTICAL, 1)
     assert scored_position_1 in valid
     assert scored_position_2 in valid
+
+def test_remove_word():
+    grid = WordPlacementGrid(3)
+    grid.place_word("CAT", 1, 0, HORIZONTAL)
+    grid.place_word("MAT", 0, 1, VERTICAL)
+
+    assert grid.grid == [
+        [FILLER, "M", FILLER],
+        ["C", "A", "T"],
+        [FILLER, "T", FILLER],
+        ]
+
+    grid.remove_word("CAT")
+    assert grid.grid == [
+        [EMPTY, "M", EMPTY],
+        [EMPTY, "A", EMPTY],
+        [EMPTY, "T", EMPTY],
+        ]
+    
+    assert "CAT" not in grid.words
+    
+    assert "C" not in grid.char_positions
+    assert "A" in grid.char_positions
+    assert len(grid.char_positions["T"]) == 1

@@ -125,6 +125,31 @@ class WordPlacementGrid:
         new_grid.char_positions = copy.deepcopy(self.char_positions)
         new_grid.words = self.words.copy()
         return new_grid
+    
+    def remove_word(self, word:str):
+        (row, col), direction = self.words[word]
+        intersections = self._intersections(word, row, col, direction)
+
+        for index, char in enumerate(word):
+            if direction == VERTICAL:
+                r, c = row + index, col
+            else:
+                r, c = row, col + index
+
+            if (r, c) not in intersections:
+                # delete from grid
+                self.grid[r][c] = EMPTY
+                # delete from char_positions
+                if (r,c) in self.char_positions[char]:
+                    self.char_positions[char].remove((r, c))
+                    if not self.char_positions[char]:
+                        del self.char_positions[char]
+                else:
+                    print(f"CHAR NOT FOUND AT ")
+            else:
+                self._unpad_intersection(r,c)
+
+        del self.words[word]
 
     def get_scored_valid_placements(self, word:str):
         """
@@ -249,6 +274,7 @@ class WordPlacementGrid:
         """
         Place the characters of the word onto the grid at the specified row and column,
         in the given direction (HORIZONTAL or VERTICAL). Modifies the grid in-place.
+        Adds placed char to char_positions map.
         """
         if not self._fits_in_grid(word, row, col, direction):
             raise ValueError(f'word {word} does not fit in grid')
@@ -286,6 +312,20 @@ class WordPlacementGrid:
             if row + len(word) < len(self.grid):
                 self.grid[row + len(word)][col] = FILLER
     
+    def _unpad_intersection(self, row:int, col:int):
+        # up-left
+        if row > 0 and col > 0 and self.grid[row-1][col-1] == FILLER:
+            self.grid[row-1][col-1] = EMPTY
+        #up-right
+        if row > 0 and col < len(self.grid)-1 and self.grid[row-1][col+1] == FILLER:
+            self.grid[row-1][col+1] = EMPTY
+        #down-left
+        if row < len(self.grid)-1 and col > 0 and self.grid[row+1][col-1] == FILLER:
+            self.grid[row+1][col-1] = EMPTY
+        #down-right
+        if row < len(self.grid)-1 and col < len(self.grid)-1 and self.grid[row+1][col+1] == FILLER:
+            self.grid[row+1][col+1] = EMPTY
+
     def _pad_intersection(self, row:int, col:int):
         """
         Add FILLER characters diagonally adjacent to the cell at (row, col) if those cells are EMPTY,
