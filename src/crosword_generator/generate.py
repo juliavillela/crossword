@@ -161,8 +161,6 @@ class CrosswordGenerator:
         while self.grid_size < self.max_grid_size:
             grid = self._retry_grid_builds()
             if grid:
-                grid.display() #debug
-                print("success! iteration count: ", self.iteration_count) #debug
                 crossword = grid.export()
                 return crossword
             else:
@@ -170,12 +168,14 @@ class CrosswordGenerator:
         return None
 
 class RecursiveCrosswordGenerator:
+    max_grid_size = 45
+
     def __init__(self, words:list):
         self.words = sorted(words, key=lambda w:len(w), reverse=True)
         self.grid_size = self._initial_grid_size()
         self.recursion_counter = 0
-        self.grid_copies = 0
-        
+        self.max_recursion_depth = 0
+
     def _initial_grid_size(self):
         """
         Calculate the initial size for the crossword grid.
@@ -194,8 +194,9 @@ class RecursiveCrosswordGenerator:
         area_axis = ceil(sqrt(total)*1.2) # expect at least 20% of the grid to be empty
         return max(longest, area_axis)
     
-    def recursively_place_words(self, words:list[str], grid:WordPlacementGrid, counter=0):
+    def recursively_place_words(self, words:list[str], grid:WordPlacementGrid, depth=0):
         self.recursion_counter += 1
+        self.max_recursion_depth = max(self.max_recursion_depth, depth)
         if len(words) == 0:
             return grid
         word = words[0]
@@ -209,12 +210,13 @@ class RecursiveCrosswordGenerator:
         valid_placements.sort(key=lambda x: x[2], reverse=True)
 
         for ((row, col), dir, score) in valid_placements:
-            new_grid = grid.copy()
-            self.grid_copies += 1
-            new_grid.place_word(word, row, col, dir)
-            result = self.recursively_place_words(words[1:], new_grid, counter)
+            grid.place_word(word, row, col, dir)
+            result = self.recursively_place_words(words[1:], grid, depth + 1)
             if result:
                 return result
+            # undo unsucessful placement
+            grid.remove_word(word)
+            
         return False
 
     def build_grid(self):
@@ -235,14 +237,9 @@ class RecursiveCrosswordGenerator:
         return result
 
     def generate(self):
-        while self.grid_size < 45:
-            grid_1 = self.build_grid()
-            
-            if grid_1: grid_1.display()
-
-            if not grid_1:
-                print(f"could not build grid with size {self.grid_size}")
+        while self.grid_size < self.max_grid_size:
+            grid = self.build_grid()
+            if not grid:
                 self.grid_size += 1
             else:
-                print("sucess! reccursion count:", self.recursion_counter, " grid copies:", self.grid_copies)
-                break
+                return grid.export()
