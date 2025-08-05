@@ -1,1 +1,1 @@
-from .generate import CrosswordGenerator
+from .generate import RecursiveCrosswordGenerator as CrosswordGenerator
