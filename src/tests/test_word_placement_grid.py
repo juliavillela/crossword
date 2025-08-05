@@ -161,14 +161,15 @@ def test_remove_word():
         ]
 
     grid.remove_word("CAT")
+    # make sure chars and padding were removed
     assert grid.grid == [
         [EMPTY, "M", EMPTY],
         [EMPTY, "A", EMPTY],
         [EMPTY, "T", EMPTY],
         ]
-    
+    # words clean up
     assert "CAT" not in grid.words
-    
+    # char_positions clean up
     assert "C" not in grid.char_positions
     assert "A" in grid.char_positions
     assert len(grid.char_positions["T"]) == 1
