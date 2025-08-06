@@ -34,6 +34,7 @@ class WordPlacementGrid:
         """
         self.words = {}
         self.grid = [[EMPTY for _ in range(initial_size)] for _ in range(initial_size)]
+        self.char_positions = {}
 
     def place_word(self, word:str, row:int, col:int, direction:str):
         """
@@ -151,13 +152,9 @@ class WordPlacementGrid:
         Returns:
             list[tuple[int, int]]: List of (row, col) tuples indicating occurrences of char.
         """
-        positions = []
-        for row_i, row in enumerate(self.grid):
-            for col_i, cell in enumerate(row):
-                if char == cell:
-                    positions.append((row_i, col_i))
-        return positions
-       
+        positions = self.char_positions.get(char, set())
+        return list(positions)
+
     def display(self):
         """
         Print a visualization of the grid to the terminal.
@@ -188,13 +185,20 @@ class WordPlacementGrid:
         if not self._fits_in_grid(word, row, col, direction):
             raise ValueError(f'word {word} does not fit in grid')
         
-        if direction == HORIZONTAL:
-            for i, letter in enumerate(word):
-                self.grid[row][col + i] = letter
+        for i, letter in enumerate(word):
+            if direction == VERTICAL:
+                char_row = row + i
+                char_col = col
+            if direction == HORIZONTAL:
+                char_row = row
+                char_col = col + i
 
-        elif direction == VERTICAL:
-            for i, letter in enumerate(word):
-                self.grid[row + i][col] = letter
+            self.grid[char_row][char_col] = letter
+            
+            # add letter to char_positions map
+            if letter not in self.char_positions:
+                self.char_positions[letter] = set()
+            self.char_positions[letter].add((char_row, char_col)) 
 
     def _pad_word(self, word:str, row:int, col:int, direction:str):
         """
