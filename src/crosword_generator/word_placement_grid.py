@@ -1,4 +1,5 @@
 import math
+import copy
 from .constants import *
 from .crossword import Crossword
 
@@ -117,6 +118,98 @@ class WordPlacementGrid:
                 return False
         return True
     
+    def copy(self):
+        initial_size = len(self.grid)
+        new_grid = WordPlacementGrid(initial_size)
+        new_grid.grid = copy.deepcopy(self.grid)
+        new_grid.char_positions = copy.deepcopy(self.char_positions)
+        new_grid.words = self.words.copy()
+        return new_grid
+    
+    def remove_word(self, word:str):
+        (row, col), direction = self.words[word]
+        intersections = self._intersections(word, row, col, direction)
+
+        for index, char in enumerate(word):
+            if direction == VERTICAL:
+                r, c = row + index, col
+            else:
+                r, c = row, col + index
+
+            if (r, c) not in intersections:
+                # delete from grid
+                self.grid[r][c] = EMPTY
+                # delete from char_positions
+                if (r,c) in self.char_positions[char]:
+                    self.char_positions[char].remove((r, c))
+                    if not self.char_positions[char]:
+                        del self.char_positions[char]
+                else:
+                    print(f"CHAR NOT FOUND AT ")
+            else:
+                self._unpad_intersection(r,c)
+
+        del self.words[word]
+
+    def get_scored_valid_placements(self, word:str):
+        """
+        Return a list of valid placements (with non-zero score) for the given word
+        in the current state of the grid.
+        The score is based on how many intersections with already placed words this
+        placement creates. 
+
+        Returns:
+            list[((row, col), direction, score)]
+        """
+        valid_placements = []
+        # iterate through each char in word to find matching chars in the grid
+        for index, char in enumerate(word):
+            matches = self.find_char_positions(char)
+            for match in matches:
+                h_col = match[1] - index
+                h_row = match[0] 
+                h_score = self._placement_score(word, h_row, h_col, HORIZONTAL)
+                if h_score > 0:
+                    valid_placements.append(((h_row, h_col), HORIZONTAL, h_score)) 
+                
+                v_col = match[1]
+                v_row = match[0] - index
+                v_score = self._placement_score(word, v_row, v_col, VERTICAL)
+                if v_score > 0:
+                    valid_placements.append(((v_row, v_col), VERTICAL, v_score))
+        return valid_placements
+
+    def _placement_score(self, word:str, row:int, col:int, direction:str):
+        # word must fit
+        if not self._fits_in_grid(word, row, col, direction):
+            return 0
+
+        # the square before the start of word and after the end of word should be empty
+        if direction == HORIZONTAL:
+            prev_empty_or_edge = col == 0 or self.grid[row][col-1] in [EMPTY, FILLER]
+            next_empty_or_edge = col + len(word) == len(self.grid) or self.grid[row][col + len(word)] in [EMPTY, FILLER]
+        else: # vertical
+            prev_empty_or_edge = row == 0 or self.grid[row-1][col] in [EMPTY, FILLER]
+            next_empty_or_edge = row + len(word) == len(self.grid) or self.grid[row + len(word)][col] in [EMPTY, FILLER]
+        if not (prev_empty_or_edge and next_empty_or_edge):
+            return 0
+
+        # calculate score based on overlaps
+        score = 0
+        for i, letter in enumerate(word):
+            if direction == HORIZONTAL:
+                cell = self.grid[row][col + i]
+            else:
+                cell = self.grid[row + i][col]
+            if cell == letter:
+                score += 1
+            elif cell == EMPTY:
+                continue
+            else:
+                return 0
+            
+        return score
+
     def get_center_placement(self, word:str, direction:str):
         """
         Return the (row, col) coordinates to place the first word centered on the grid.
@@ -181,6 +274,7 @@ class WordPlacementGrid:
         """
         Place the characters of the word onto the grid at the specified row and column,
         in the given direction (HORIZONTAL or VERTICAL). Modifies the grid in-place.
+        Adds placed char to char_positions map.
         """
         if not self._fits_in_grid(word, row, col, direction):
             raise ValueError(f'word {word} does not fit in grid')
@@ -218,6 +312,20 @@ class WordPlacementGrid:
             if row + len(word) < len(self.grid):
                 self.grid[row + len(word)][col] = FILLER
     
+    def _unpad_intersection(self, row:int, col:int):
+        # up-left
+        if row > 0 and col > 0 and self.grid[row-1][col-1] == FILLER:
+            self.grid[row-1][col-1] = EMPTY
+        #up-right
+        if row > 0 and col < len(self.grid)-1 and self.grid[row-1][col+1] == FILLER:
+            self.grid[row-1][col+1] = EMPTY
+        #down-left
+        if row < len(self.grid)-1 and col > 0 and self.grid[row+1][col-1] == FILLER:
+            self.grid[row+1][col-1] = EMPTY
+        #down-right
+        if row < len(self.grid)-1 and col < len(self.grid)-1 and self.grid[row+1][col+1] == FILLER:
+            self.grid[row+1][col+1] = EMPTY
+
     def _pad_intersection(self, row:int, col:int):
         """
         Add FILLER characters diagonally adjacent to the cell at (row, col) if those cells are EMPTY,

@@ -26,7 +26,6 @@ def test_place_word_horizontal():
     assert grid.char_positions["A"] == {(1,2)}
     assert grid.char_positions["T"] == {(1,3)}
 
-
 def test_place_word_vertical():
     grid = WordPlacementGrid(5)
     word = "CAT"
@@ -44,7 +43,6 @@ def test_place_word_vertical():
     assert grid.char_positions["C"] == {(1,1)}
     assert grid.char_positions["A"] == {(2,1)}
     assert grid.char_positions["T"] == {(3,1)}
-
 
 def test_can_place_vertical_boundaries():
     grid = WordPlacementGrid(4)
@@ -111,3 +109,67 @@ def test_intersections():
     assert (1,2) in intersections
     assert (1,4) in intersections
     assert len(intersections) == 2
+
+def test_placement_score():
+    grid = WordPlacementGrid(6)
+    # doesn't fit
+    assert grid._placement_score("LONGWORD", 0, 0, HORIZONTAL) == 0
+    # valid, but no overlap
+    assert grid._placement_score("CATS", 0, 0, HORIZONTAL) == 0
+
+    # vertical overlap on "A"
+    grid.place_word("CATS", 1, 1, HORIZONTAL)
+    assert grid._placement_score("MATTE", 0, 2, VERTICAL) == 1
+    
+    grid.place_word("MATTE", 0, 2, VERTICAL)
+    # horizontal overlap on "E"
+    assert grid._placement_score("DREAM", 4, 0, HORIZONTAL) == 1
+    grid.place_word("DREAM", 4, 0, HORIZONTAL)
+    # double overlap on "S" and "M"
+    assert grid._placement_score("STEM", 1, 4, VERTICAL) == 2
+    
+def test_get_scored_valid_placements():
+    grid = WordPlacementGrid(6)
+
+    # empty grid has no valid placements
+    assert grid.get_scored_valid_placements("CATS") == []
+
+    grid.place_word("CATS", 1, 1, HORIZONTAL)
+
+    # word "MAT" can only be placed at "A" intersection
+    assert grid.get_scored_valid_placements("MAT") == [((0,2), VERTICAL, 1)]
+
+    # Word "AT" can be placed intersecting "A" or "T"
+    valid = grid.get_scored_valid_placements("AT")
+    assert len(valid) == 2
+    # intersecting "A"
+    scored_position_1 = ((1, 2), VERTICAL, 1)
+    # intersecting "T"
+    scored_position_2 = ((0,3), VERTICAL, 1)
+    assert scored_position_1 in valid
+    assert scored_position_2 in valid
+
+def test_remove_word():
+    grid = WordPlacementGrid(3)
+    grid.place_word("CAT", 1, 0, HORIZONTAL)
+    grid.place_word("MAT", 0, 1, VERTICAL)
+
+    assert grid.grid == [
+        [FILLER, "M", FILLER],
+        ["C", "A", "T"],
+        [FILLER, "T", FILLER],
+        ]
+
+    grid.remove_word("CAT")
+    # make sure chars and padding were removed
+    assert grid.grid == [
+        [EMPTY, "M", EMPTY],
+        [EMPTY, "A", EMPTY],
+        [EMPTY, "T", EMPTY],
+        ]
+    # words clean up
+    assert "CAT" not in grid.words
+    # char_positions clean up
+    assert "C" not in grid.char_positions
+    assert "A" in grid.char_positions
+    assert len(grid.char_positions["T"]) == 1

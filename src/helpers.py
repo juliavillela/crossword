@@ -1,19 +1,21 @@
 import os 
 from .crosword_generator.constants import *
 
-def validate_word_list(word_list):
+def validate_word_list(word_list:list):
     """
     Raises an error if word list does not meet any of the criteria
 
     A word_list is valid if:
     - it has more than MIN_WORDS and less than MAX_WORDS.
-    - no words in list are either too long or too short
+    - no words in list are either too long or too short.
+    - each word is unique.
     - each word has at least one char in common with another word.
     """
     # word list is of adequate length
     if len(word_list) > MAX_WORDS or len(word_list) < MIN_WORDS:
         message = f"word list should have between {MIN_WORDS} and {MAX_WORDS}, not {len(word_list)}"
         return (False, message)
+    
     # no words are too long
     too_long = [w for w in word_list if len(w)>MAX_WORD_LEN]
     if len(too_long):
@@ -25,7 +27,14 @@ def validate_word_list(word_list):
     if len(too_short):
         message = f"word list contains words that are shorter than {MIN_WORD_LEN}: {too_short}"
         return (False, message)
-        
+    
+    # word should not appear more than once
+    unique = set(word_list)
+    duplicates = [w for w in unique if word_list.count(w) > 1]
+    if duplicates:
+        message = f"word(s) {duplicates} appears more than once. Each word should be unique."
+        return (False, message)
+
     # words should have at least one char in common with another word        
     for i, word1 in enumerate(word_list):
         found_common = False
@@ -36,7 +45,8 @@ def validate_word_list(word_list):
                     break
         if not found_common:
             message = f"word list is impossible. word '{word1}' has no chars in common with other words"
-            return (False, message)    
+            return (False, message)
+        
     return (True, "will generate puzzle")
 
 def clean_word_list_input(word_list):

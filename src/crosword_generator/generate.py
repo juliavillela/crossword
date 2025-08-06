@@ -2,8 +2,10 @@ from random import shuffle
 from math import sqrt, ceil
 from .constants import *
 from .word_placement_grid import WordPlacementGrid
+from .crossword import Crossword
 
-class CrosswordGenerator:
+# Legacy generator. Now using the Recursive method for optimized performance.
+class IterativeCrosswordGenerator:
     """
     Generates crossword puzzles by placing a list of words into a grid.
 
@@ -23,6 +25,8 @@ class CrosswordGenerator:
     def __init__(self, words:list) -> None:
         self.words = sorted(words, key=lambda w: len(w), reverse=True)
         self.grid_size = self._initial_grid_size()
+        # for analysing performance
+        self.iteration_count = 0
 
     def __str__(self):
         return f"crossword generator({self.grid_size}): {self.words}"
@@ -101,6 +105,7 @@ class CrosswordGenerator:
         
         while len(words) and iteration_count<max_iterations:
             word = words.pop(0)
+            self.iteration_count += 1
             iteration_count += 1
             # get all valid placements for word in current grid
             valid_placements = self._get_valid_word_placements(word, grid)
@@ -138,8 +143,6 @@ class CrosswordGenerator:
         while len(self.words) != len(grid.get_words()) and iteration_counter < self.max_attempts_per_size:
             iteration_counter += 1
             grid = self._attempt_grid_build()
-        
-        print("iteration count", iteration_counter, self.grid_size) #debug
 
         if len(self.words) != len(grid.get_words()):
             return None
@@ -164,4 +167,134 @@ class CrosswordGenerator:
                 return crossword
             else:
                 self.grid_size += 1
+        return None
+
+class RecursiveCrosswordGenerator:
+    """
+    Generates crossword puzzles by placing a list of words into a grid.
+
+    The generator attempts to place words recursively on a grid, starting with
+    an initial size based on word lengths, and increases the grid size as needed
+    until all words fit or a maximum size limit is reached.
+
+    Usage:
+        Initialize with a list of words.
+        Call `generate()` to create a crossword puzzle instance containing all words,
+        or None if generation fails within constraints.
+    """
+    max_grid_size = 45 # Maximum allowed size of the crossword grid before giving up.
+
+    def __init__(self, words:list):
+        self.words = sorted(words, key=lambda w:len(w), reverse=True)
+        self.grid_size = self._initial_grid_size()
+        # for analysing performance
+        self.recursion_counter = 0
+        self.max_recursion_depth = 0
+
+    def _initial_grid_size(self):
+        """
+        Calculate the initial size for the crossword grid.
+
+        The size is based on:
+        - The length of the longest word (the grid axis cannot be smaller than this).
+        - The total length of all words, estimating an area with about 20% empty space.
+
+        Returns:
+            int: The initial grid size (number of rows and columns).
+        """
+        lengths = [len(s) for s in self.words]
+        total = sum(lengths)
+        lengths.sort()
+        longest = lengths[-1] # axis cannot be smaller then the longest word
+        area_axis = ceil(sqrt(total)*1.2) # expect at least 20% of the grid to be empty
+        return max(longest, area_axis)
+    
+    def recursively_place_words(self, words:list[str], grid:WordPlacementGrid, depth=0):
+        """
+        Attempts to place all words recursively onto the given grid using a backtracking algorithm.
+
+        The method tries to place the first word in the list at all valid positions (sorted by overlap score),
+        and then recursively attempts to place the remaining words. If a complete valid placement is found,
+        the filled grid is returned. Otherwise, backtracks by removing the last placed word and tries another position.
+
+        This function also tracks:
+            - The number of recursive calls (`self.recursion_counter`)
+            - The maximum recursion depth reached (`self.max_recursion_depth`)
+
+        Args:
+            words (list[str]): The list of words to place onto the grid.
+            grid (WordPlacementGrid): The current grid (modified in-place).
+            depth (int): The current depth of the recursion.
+        """
+        self.recursion_counter += 1
+        self.max_recursion_depth = max(self.max_recursion_depth, depth)
+        if len(words) == 0:
+            return grid
+        word = words[0]
+
+        # Get all valid placements with their scores
+        valid_placements = grid.get_scored_valid_placements(word) # list of ((row, col), direction, score)
+        
+        if not valid_placements:
+            return False
+
+        # Try better-scoring placements first
+        valid_placements.sort(key=lambda x: x[2], reverse=True)
+
+        for ((row, col), dir, score) in valid_placements:
+            grid.place_word(word, row, col, dir)
+            result = self.recursively_place_words(words[1:], grid, depth + 1)
+            if result:
+                return result
+            # Backtrack if placing the word leads to failure
+            grid.remove_word(word)
+            
+        return False
+
+    def build_grid(self) -> WordPlacementGrid | bool:
+        """
+        Attempts to build a crossword grid by placing words recursively, starting from a blank grid.
+        
+        1. places longest word horizontally at the center of the grid
+        2. shuffles the order of remaining words
+        3. calls `recursively_place_words` to attempt to build a grid with all words
+
+        Returns: WordPlacementGrid | bool: The filled grid if all words are successfully placed,
+        or False if placement fails.
+        """
+        # create a blank grid
+        grid = WordPlacementGrid(self.grid_size)
+
+        # create a copy of words
+        words = self.words.copy()
+
+        # place longest word first (words are already sorted)
+        first_word = words.pop(0)
+        (row, col) = grid.get_center_placement(first_word, HORIZONTAL)
+        grid.place_word(first_word, row, col, HORIZONTAL)
+       
+        # randomize remaining word order to improve chances of successful layout
+        shuffle(words)
+        result = self.recursively_place_words(words, grid)
+
+        return result
+
+    def generate(self) -> Crossword | None:
+        """
+        Generate a complete crossword puzzle using the provided word list.
+
+        Process:
+            1. Attempts to build a grid starting from the initial size (`self.grid_size`).
+            2. If the words can't all be placed, it increments the grid size and tries again.
+            3. Repeats until either all words are successfully placed or the maximum grid size is reached.
+
+        Returns: Crossword | None: An instance of the `Crossword` class, representing the finalized puzzle
+            or `None` if a puzzle could not be generated within the size limit.
+        """
+        while self.grid_size < self.max_grid_size:
+            grid = self.build_grid()
+            if not grid:
+                self.grid_size += 1
+            else:
+                return grid.export()
         return None
