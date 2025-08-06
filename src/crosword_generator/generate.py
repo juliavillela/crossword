@@ -4,6 +4,7 @@ from .constants import *
 from .word_placement_grid import WordPlacementGrid
 from .crossword import Crossword
 
+# Legacy generator. Now using the Recursive method for optimized performance.
 class IterativeCrosswordGenerator:
     """
     Generates crossword puzzles by placing a list of words into a grid.
@@ -280,12 +281,15 @@ class RecursiveCrosswordGenerator:
 
     def generate(self) -> Crossword | None:
         """
-        Attempts to generate a complete crossword grid that fits all words.
+        Generate a complete crossword puzzle using the provided word list.
 
         Process:
-        1. Tries to build a valid grid starting from the initial size (`self.grid_size`).
-        2. If the grid cannot be completed, increases the grid size and tries again.
-        3. Repeats until a valid grid is found or the maximum grid size is reached.
+            1. Attempts to build a grid starting from the initial size (`self.grid_size`).
+            2. If the words can't all be placed, it increments the grid size and tries again.
+            3. Repeats until either all words are successfully placed or the maximum grid size is reached.
+
+        Returns: Crossword | None: An instance of the `Crossword` class, representing the finalized puzzle
+            or `None` if a puzzle could not be generated within the size limit.
         """
         while self.grid_size < self.max_grid_size:
             grid = self.build_grid()
