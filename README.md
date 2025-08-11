@@ -24,15 +24,22 @@ python -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 ```
+
+### Run the flask aplication
 Run the flask application from `crossword-generator/src/`:
 ```bash
 flask run
 ```
-
 Then go to http://127.0.0.1:5000 in your browser.
 
+### Run the CLI application
+From crossword/ (project root):
+```bash
+python3 -m src.utils.cli
+```
 
-To run tests, from `crossword-generator/src/`:
+### Run tests
+From `crossword-generator/src/`:
 ```bash
 pytest
 ```
@@ -50,7 +57,7 @@ src/
 │   ├── word_placement_grid.py    # WordPlacementGrid: manages the puzzle grid
 │   ├── generate.py               # RecursiveCrosswordGenerator and logic
 │   ├── crossword.py              # Crossword: exports and renders the final puzzle
-│   └── constants.py              # Shared constants (e.g., directions, symbols)
+│   └── constants.py              # Shared constants (e.g., directions, max grid size)
 │
 ├── tests/                     # Unit tests for core logic
 │   ├── test_crossword.py
