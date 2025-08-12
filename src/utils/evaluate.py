@@ -8,11 +8,11 @@ and operation counts.
 
 Meant to be run manually for evaluation purposes.
 """
-
+import argparse
 import time
 import tracemalloc
 
-from crosword_generator.generate import RecursiveCrosswordGenerator, IterativeCrosswordGenerator
+from ..crosword_generator.generate import RecursiveCrosswordGenerator, IterativeCrosswordGenerator
 
 short_word_list = ["CATS", "STEM", "MATTE", "DREAM"] # 4 short words
 average_word_list = ["CATS", "PRIORITY", "DRIVER", "PIPE", "CARS", "DREAM", "EVOLVE", "BEST", "AVERAGE", "STORM", "FOUNTAIN"]
@@ -38,18 +38,22 @@ class Evaluate:
         self.generator = self.generator_class(word_list)
         start = time.time()
         tracemalloc.start()
-        self.generator.generate()
+        self.result = self.generator.generate()
         self.current_memory, self.peak_memory = tracemalloc.get_traced_memory()
         end = time.time()
         tracemalloc.stop()
         self.time = end - start
-        
+
     def results(self):
         print()
         print("-"*5, self.generator_class.__name__, f"({self.word_count} words)", "-"*5)
-        print(f"time elapsed: {round(self.time,4)}")
-        print(f"peak memory usage: {(self.peak_memory//1000)}KB")
-        print(f"current memory usage: {self.current_memory//1000}KB")
+        if self.result:
+            print(f"status: successfully generated grid.")
+        else:
+            print("status: could not generate grid.")
+        print(f"time elapsed: {round(self.time,4)} s")
+        print(f"peak memory usage: {(self.peak_memory//1000)} KB")
+        print(f"current memory usage: {self.current_memory//1000} KB")
         if isinstance(self.generator, RecursiveCrosswordGenerator):
             print(f"operations count: {self.generator.recursion_counter}")
             print(f"max recursion depth: {self.generator.max_recursion_depth}")
@@ -57,9 +61,35 @@ class Evaluate:
            print(f"operations count: {self.generator.iteration_count}") 
 
 
-def evaluate(generator_class):
-    eval = Evaluate(generator_class)
-    lists= [short_word_list, average_word_list, long_word_list, very_long_word_list]
-    for list in lists:
-        eval.run(list)
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description=(
+        "Evaluate crossword generation performance. "
+        "Note: This script accepts any word list as-is, without validation or cleaning."
+        )
+    )
+    parser.add_argument(
+        "wordlist",
+        nargs="*",
+        help="List of words to evaluate. If omitted, runs default evaluation using 4 different word list sizes."
+    )
+
+    args = parser.parse_args()
+    eval = Evaluate(RecursiveCrosswordGenerator)
+    if args.wordlist:
+        print(f"Evaluating crossword generator with: {args.wordlist}.")
+        eval.run(args.wordlist)
         eval.results()
+
+    else:
+        print("Running default evaluation...")
+        lists= [short_word_list, average_word_list, long_word_list, very_long_word_list]
+        for list in lists:
+            eval.run(list)
+            eval.results()
+        
+
+if __name__ == "__main__":
+    main()
