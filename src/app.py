@@ -58,6 +58,7 @@ def generate_crossword():
         gen = CrosswordGenerator(session.get("word_list"))
         crossword = gen.generate()
         if crossword:
+            os.makedirs(media_folder, exist_ok=True)
             crossword.save_key_img(os.path.join(media_folder, f'{session.get("session_id")}key.png'))
             crossword.save_blank_img(os.path.join(media_folder, f'{session.get("session_id")}blank.png'))
         else:
