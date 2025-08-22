@@ -3,7 +3,7 @@
 A web-based crossword puzzle generator built with Python and Flask.
 Users submit a list of words, and the app generates a crossword layout by placing words on a grid based on shared letters and optimal placement logic.
 
-Try the [live demo](https://juliavillela.pythonanywhere.com/)!
+Try the [live demo](https://crossword-ekp6.onrender.com/)!
 
 ## Features
 
